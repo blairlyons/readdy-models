@@ -98,6 +98,8 @@ class ActinUtil:
         "use_box_arp": False,
         "use_box_cap": False,
         "obstacle_radius": 35.0,
+        "obstacle_diff_coeff": 0.0,
+        "use_box_obstacle": False,
         "n_fixed_monomers_pointed": 0,
         "n_fixed_monomers_barbed": 0,
         "displace_pointed_end_tangent": False,
@@ -3062,7 +3064,7 @@ class ActinUtil:
     @staticmethod
     def add_monomer_box_potentials(system):
         """
-        Confine free monomers to boxes centered at origin with extent.
+        Confine free monomers to boxes centered at center with extent.
         """
         particle_types = {
             "actin": ["actin#free", "actin#free_ATP"],
@@ -3094,6 +3096,36 @@ class ActinUtil:
                 ActinUtil.DEFAULT_FORCE_CONSTANT,
                 system,
             )
+
+    @staticmethod
+    def add_obstacle_box_potential(system):
+        """
+        Confine obstacle to a box centered at center with extent.
+        """
+        if not parameters[f"use_box_obstacle"]:
+            return
+        print(f"Adding box for obstacle")
+        center = np.array(
+            [
+                parameters[f"obstacle_box_center_x"],
+                parameters[f"obstacle_box_center_y"],
+                parameters[f"obstacle_box_center_z"],
+            ]
+        )
+        size = np.array(
+            [
+                parameters[f"obstacle_box_size_x"],
+                parameters[f"obstacle_box_size_y"],
+                parameters[f"obstacle_box_size_z"],
+            ]
+        )
+        ActinUtil.add_box_potential(
+            ["obstacle"],
+            center - 0.5 * size,
+            size,
+            ActinUtil.DEFAULT_FORCE_CONSTANT,
+            system,
+        )
 
     @staticmethod
     def add_dimerize_reaction(system):

@@ -110,7 +110,7 @@ class ActinSimulation:
         self.actin_util.add_actin_types(self.system, actin_diffCoeff)
         self.actin_util.add_arp23_types(self.system, arp23_diffCoeff)
         self.actin_util.add_cap_types(self.system, cap_diffCoeff)
-        self.system.add_species("obstacle", 0.0)
+        self.system.add_species("obstacle", self._parameter("obstacle_diff_coeff"))
 
     def add_constraints(self):
         """
@@ -172,6 +172,7 @@ class ActinSimulation:
         )
         # box potentials
         self.actin_util.add_monomer_box_potentials(self.system)
+        self.actin_util.add_obstacle_box_potential(self.system)
 
     def add_reactions(self):
         """
