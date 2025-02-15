@@ -104,6 +104,7 @@ class ActinUtil:
         "obstacle_radius": 35.0,
         "obstacle_diff_coeff": 0.0,
         "use_box_obstacle": False,
+        "position_obstacle_stride": 0,
         "n_fixed_monomers_pointed": 0,
         "n_fixed_monomers_barbed": 0,
         "displace_pointed_end_tangent": False,
