@@ -33,6 +33,10 @@ init_monomer_positions = {}
 pointed_monomer_positions = []
 
 
+obstacle_time_index = 0
+obstacle_position = np.array([41., 0, 0]) # TODO set from another simulator etc
+
+
 class ActinUtil:
     DEFAULT_FORCE_CONSTANT = 250.0
 
@@ -1483,6 +1487,23 @@ class ActinUtil:
             )
             recipe.change_particle_position(v, new_pos)
         time_index += 1
+        return recipe
+
+    @staticmethod
+    def reaction_function_position_obstacle(topology):
+        """
+        reaction function to set position of obstacle particle.
+        """
+        global obstacle_time_index
+        recipe = readdy.StructuralReactionRecipe(topology)
+        if obstacle_time_index > 0 and obstacle_time_index % parameters["position_obstacle_stride"] != 0:
+            obstacle_time_index += 1
+            return recipe
+        if parameters["verbose"]:
+            print("Translate obstacle")
+        v = topology.graph.get_vertices()[0] # there should only be one particle in topology
+        recipe.change_particle_position(v, obstacle_position)
+        obstacle_time_index += 1
         return recipe
 
     @staticmethod
@@ -3566,6 +3587,18 @@ class ActinUtil:
             "Translate",
             topology_type="Actin-Polymer",
             reaction_function=ActinUtil.reaction_function_translate,
+            rate_function=ReaddyUtil.rate_function_infinity,
+        )
+
+    @staticmethod
+    def add_position_obstacle_reaction(system):
+        """
+        set the position of the first obstacle particle each timestep.
+        """
+        system.topologies.add_structural_reaction(
+            "Translate_Obstacle",
+            topology_type="Obstacle",
+            reaction_function=ActinUtil.reaction_function_position_obstacle,
             rate_function=ReaddyUtil.rate_function_infinity,
         )
 

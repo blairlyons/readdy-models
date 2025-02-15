@@ -110,7 +110,8 @@ class ActinSimulation:
         self.actin_util.add_actin_types(self.system, actin_diffCoeff)
         self.actin_util.add_arp23_types(self.system, arp23_diffCoeff)
         self.actin_util.add_cap_types(self.system, cap_diffCoeff)
-        self.system.add_species("obstacle", self._parameter("obstacle_diff_coeff"))
+        self.system.topologies.add_type("Obstacle")
+        self.system.add_topology_species("obstacle", self._parameter("obstacle_diff_coeff"))
 
     def add_constraints(self):
         """
@@ -199,6 +200,8 @@ class ActinSimulation:
             self.actin_util.add_cap_unbind_reaction(self.system)
         if self.do_pointed_end_translation():
             self.actin_util.add_translate_reaction(self.system)
+        if self._parameter("position_obstacle_stride") > 0:
+            self.actin_util.add_position_obstacle_reaction(self.system)
 
     def do_pointed_end_translation(self):
         result = self._parameter("displace_pointed_end_tangent") or self._parameter(
@@ -333,13 +336,14 @@ class ActinSimulation:
         """
         n = 0
         while f"obstacle{n}_position_x" in self.parameters:
-            self.simulation.add_particle(
-                type="obstacle",
-                position=[
+            self.simulation.add_topology(
+                "Obstacle", 
+                ["obstacle"], 
+                np.array([[
                     float(self._parameter(f"obstacle{n}_position_x")),
                     float(self._parameter(f"obstacle{n}_position_y")),
                     float(self._parameter(f"obstacle{n}_position_z")),
-                ],
+                ]])
             )
             n += 1
         if n > 0:
