@@ -2927,6 +2927,45 @@ class ActinUtil:
             system,
             n_polymer_numbers,
         )
+        util.add_polymer_repulsions_1D(
+            [
+                "actin#free",
+                "actin#free_ATP",
+            ],
+            None,
+            [
+                "actin#",
+                "actin#ATP_",
+                "actin#mid_",
+                "actin#mid_ATP_",
+                "actin#barbed_",
+                "actin#barbed_ATP_",
+                "actin#fixed_",
+                "actin#fixed_ATP_",
+                "actin#mid_fixed_",
+                "actin#mid_fixed_ATP_",
+                "actin#fixed_barbed_",
+                "actin#fixed_barbed_ATP_",
+            ],
+            0,
+            force_constant,
+            ActinStructure.actin_to_actin_repulsion_distance(True),
+            system,
+            n_polymer_numbers,
+        )
+        util.add_repulsion(
+            [
+                "actin#free",
+                "actin#free_ATP",
+            ],
+            [
+                "actin#free",
+                "actin#free_ATP",
+            ],
+            force_constant,
+            ActinStructure.actin_to_actin_repulsion_distance(True),
+            system,
+        )
         if longitudinal_bonds:
             util.add_polymer_repulsions_1D(
                 [
