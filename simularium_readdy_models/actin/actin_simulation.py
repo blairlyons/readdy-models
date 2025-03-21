@@ -7,6 +7,7 @@ import readdy
 from ..common import ReaddyUtil
 from .actin_structure import ActinStructure
 from .actin_util import ActinUtil
+from ..membrane import MembraneUtil
 
 
 class ActinSimulation:
@@ -348,6 +349,30 @@ class ActinSimulation:
             n += 1
         if n > 0:
             print(f"Added {n} obstacle(s).")
+            
+    def add_membrane(self):
+        """
+        Add membrane types and particles.
+        """
+        if not self._parameter("add_membrane"):
+            return
+        MembraneUtil.add_membrane(
+            self.system, 
+            self.simulation, 
+            np.array([[
+                float(self._parameter("membrane_center_x")),
+                float(self._parameter("membrane_center_y")),
+                float(self._parameter("membrane_center_z")),
+            ]]), 
+            np.array([[
+                float(self._parameter("membrane_extent_x")),
+                float(self._parameter("membrane_extent_y")),
+                float(self._parameter("membrane_extent_z")),
+            ]]), 
+            self._parameter("membrane_particle_radius"), 
+            self._parameter("temperature_K"), 
+            self._parameter("viscosity")
+        )
 
     def add_crystal_structure_monomers(self):
         """

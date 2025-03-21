@@ -124,6 +124,8 @@ class ActinUtil:
         "bonds_force_multiplier": 0.2,
         "angles_force_constant": 1000.0,
         "dihedrals_force_constant": 1000.0,
+        "add_membrane": False,
+        "membrane_particle_radius": 5.0,
     }
 
     @staticmethod
