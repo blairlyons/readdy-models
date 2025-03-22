@@ -125,7 +125,8 @@ class ActinUtil:
         "angles_force_constant": 1000.0,
         "dihedrals_force_constant": 1000.0,
         "add_membrane": False,
-        "membrane_particle_radius": 5.0,
+        "add_obstacles": False,
+        "actin_constraints": True
     }
 
     @staticmethod
