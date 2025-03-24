@@ -104,29 +104,29 @@ def calculate_box_potentials(center, size, particle_radius, box_size):
     lattice_dim = 0
     for dim in range(3):
         if dim == plane_dim:
-            box_origins[:, dim] = -box_size[dim]
-            box_extents[:, dim] = box_size[dim]
+            box_origins[:, dim] = -0.5 * box_size[dim] + 3
+            box_extents[:, dim] = box_size[dim] - 6
             continue
         values = coords[lattice_dim] - 0.5 * size[dim] + center[dim]
         offset = particle_radius * (1 if lattice_dim < 1 else np.sqrt(3))
         if lattice_dim < 1:
             box_origins[0][dim] = values[0]
-            box_extents[0][dim] = values[-1]
-            box_origins[1][dim] = values[-1] + offset
-            box_extents[1][dim] = values[-1] + offset
+            box_extents[0][dim] = values[-1] - values[0]
+            box_origins[1][dim] = values[-1] + offset - particle_radius
+            box_extents[1][dim] = 2 * particle_radius
             box_origins[2][dim] = values[0] + offset
-            box_extents[2][dim] = values[-1] + offset
-            box_origins[3][dim] = values[0]
-            box_extents[3][dim] = values[0]
+            box_extents[2][dim] = values[-1] - values[0]
+            box_origins[3][dim] = values[0] - particle_radius
+            box_extents[3][dim] = 2 * particle_radius
         else:
-            box_origins[0][dim] = values[0]
-            box_extents[0][dim] = values[0]
+            box_origins[0][dim] = values[0] - particle_radius
+            box_extents[0][dim] = 2 * particle_radius
             box_origins[1][dim] = values[0] + offset
-            box_extents[1][dim] = values[-1] + offset
-            box_origins[2][dim] = values[-1] + offset
-            box_extents[2][dim] = values[-1] + offset
+            box_extents[1][dim] = values[-1] - values[0]
+            box_origins[2][dim] = values[-1] + offset - particle_radius
+            box_extents[2][dim] = 2 * particle_radius
             box_origins[3][dim] = values[0]
-            box_extents[3][dim] = values[-1]
+            box_extents[3][dim] = values[-1] - values[0]
         lattice_dim += 1
     return box_origins, box_extents
 
@@ -181,21 +181,21 @@ def add_membrane_constraints(system, center, size, particle_radius, box_size):
         outer_types, 
         force_const=1000., angle=0.5 * np.pi, system=system
     )
-    # box potentials for edges TODO
-    # box_origins, box_extents = calculate_box_potentials(center, size, particle_radius, box_size)
-    # corner_suffixes = ["4_1", "2_3"]
-    # for n in range(1, 5):
-    #     box_types = [f"membrane#outer_edge_{n}", f"membrane#inner_edge_{n}"]
-    #     for suffix in corner_suffixes:
-    #         if f"{n}" in suffix:
-    #             box_types += [f"membrane#outer_edge_{suffix}", f"membrane#inner_edge_{suffix}"]
-    #             break
-    #     add_box_potential(
-    #         box_types, 
-    #         origin=box_origins[n - 1] - particle_radius, 
-    #         extent=box_extents[n - 1] + particle_radius, 
-    #         force_constant=250., system=system
-    #     )
+    # box potentials for edges
+    box_origins, box_extents = calculate_box_potentials(center, size, particle_radius, box_size)
+    corner_suffixes = ["4_1", "2_3"]
+    for n in range(1, 5):
+        box_types = [f"membrane#outer_edge_{n}", f"membrane#inner_edge_{n}"]
+        for suffix in corner_suffixes:
+            if f"{n}" in suffix:
+                box_types += [f"membrane#outer_edge_{suffix}", f"membrane#inner_edge_{suffix}"]
+                break
+        add_box_potential(
+            box_types, 
+            origin=box_origins[n - 1], 
+            extent=box_extents[n - 1], 
+            force_constant=250., system=system
+        )
 
 
 def init_membrane(simulation, center, size, particle_radius, box_size):
