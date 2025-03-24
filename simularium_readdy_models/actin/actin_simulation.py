@@ -8,7 +8,8 @@ from ..common import (
     ReaddyUtil, 
     add_membrane_particle_types, 
     add_membrane_constraints, 
-    init_membrane
+    init_membrane,
+    all_membrane_particle_types
 )
 from .actin_structure import ActinStructure
 from .actin_util import ActinUtil
@@ -182,6 +183,13 @@ class ActinSimulation:
             actin_actin_repulsion_potentials=True,
             longitudinal_bonds=longitudinal_bonds,
         )
+        self.actin_util.add_repulsions_with_actin(
+            ["obstacle"],
+            self._parameter("obstacle_radius"),
+            ActinUtil.DEFAULT_FORCE_CONSTANT,
+            self.system,
+            util
+        )
         # box potentials
         self.actin_util.add_monomer_box_potentials(self.system)
         self.actin_util.add_obstacle_box_potential(self.system)
@@ -201,6 +209,13 @@ class ActinSimulation:
                 ]), 
                 self._parameter("membrane_particle_radius"),
                 self._parameter("box_size")
+            )
+            self.actin_util.add_repulsions_with_actin(
+                all_membrane_particle_types(),
+                self._parameter("membrane_particle_radius"),
+                ActinUtil.DEFAULT_FORCE_CONSTANT,
+                self.system,
+                util
             )
 
     def add_reactions(self):

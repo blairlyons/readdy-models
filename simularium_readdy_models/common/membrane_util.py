@@ -8,6 +8,25 @@ import numpy as np
 from ..common import ReaddyUtil
 
 
+def _leaflet_types(side):
+    """
+    Get all the types for one leaflet side. side = "inner" or "outer"
+    """
+    result = [f"membrane#{side}"]
+    for n in range(1, 5):
+        result.append(f"membrane#{side}_edge_{n}")
+    result.append(f"membrane#{side}_edge_4_1")
+    result.append(f"membrane#{side}_edge_2_3")
+    return result
+
+
+def all_membrane_particle_types():
+    """
+    Get all the membrane particle types.
+    """
+    return _leaflet_types("outer") + _leaflet_types("inner")
+
+
 def add_membrane_particle_types(system, particle_radius, temperature_K, viscosity):
     """
     Add particle and topology types for membrane particles
@@ -17,18 +36,12 @@ def add_membrane_particle_types(system, particle_radius, temperature_K, viscosit
         particle_radius, viscosity, temperature_K
     )  # nm^2/s
     system.topologies.add_type("Membrane")
-    system.add_topology_species("membrane#outer", diffCoeff)
-    system.add_topology_species("membrane#inner", diffCoeff)
-    for n in range(1, 5):
-        system.add_topology_species(f"membrane#outer_edge_{n}", diffCoeff)
-        system.add_topology_species(f"membrane#inner_edge_{n}", diffCoeff)
-    system.add_topology_species("membrane#outer_edge_4_1", diffCoeff)
-    system.add_topology_species("membrane#outer_edge_2_3", diffCoeff)
-    system.add_topology_species("membrane#inner_edge_4_1", diffCoeff)
-    system.add_topology_species("membrane#inner_edge_2_3", diffCoeff)
+    particle_types = all_membrane_particle_types()
+    for t in particle_types:
+        system.add_topology_species(t, diffCoeff)
         
         
-def add_weak_interaction(types1, types2, force_const, bond_length, depth, cutoff, system):
+def _add_weak_interaction(types1, types2, force_const, bond_length, depth, cutoff, system):
     """
     Adds a weak interaction piecewise harmonic bond to the system
         from each type in types1
@@ -44,7 +57,7 @@ def add_weak_interaction(types1, types2, force_const, bond_length, depth, cutoff
             )
 
 
-def add_box_potential(particle_types, origin, extent, force_constant, system):
+def _add_box_potential(particle_types, origin, extent, force_constant, system):
     """
     Add a box potential to keep the given particle types
     inside a box centered at origin with extent.
@@ -56,21 +69,9 @@ def add_box_potential(particle_types, origin, extent, force_constant, system):
             origin=origin,
             extent=extent,
         )
-        
-        
-def leaflet_types(side):
-    """
-    Get all the types for one leaflet side. side = "inner" or "outer"
-    """
-    result = [f"membrane#{side}"]
-    for n in range(1, 5):
-        result.append(f"membrane#{side}_edge_{n}")
-    result.append(f"membrane#{side}_edge_4_1")
-    result.append(f"membrane#{side}_edge_2_3")
-    return result
     
     
-def calculate_lattice(size, particle_radius):
+def _calculate_lattice(size, particle_radius):
     """
     Calculate the x and y lattice coordinates of the membrane
     and find the plane dimension with zero size.
@@ -93,12 +94,12 @@ def calculate_lattice(size, particle_radius):
     return result, plane_dim
         
         
-def calculate_box_potentials(center, size, particle_radius, box_size):
+def _calculate_box_potentials(center, size, particle_radius, box_size):
     """
     Get the origin and extent for each of the four box potentials 
     constraining the edges of the membrane.
     """
-    coords, plane_dim = calculate_lattice(size, particle_radius)
+    coords, plane_dim = _calculate_lattice(size, particle_radius)
     box_origins = np.zeros((4, 3))
     box_extents = np.zeros((4, 3))
     lattice_dim = 0
@@ -136,16 +137,16 @@ def add_membrane_constraints(system, center, size, particle_radius, box_size):
     Add bond, angle, and box constraints for membrane particles to the ReaDDy system.
     """
     util = ReaddyUtil()
-    inner_types = leaflet_types("inner")
-    outer_types = leaflet_types("outer")
+    inner_types = _leaflet_types("inner")
+    outer_types = _leaflet_types("outer")
     # weak interaction between particles in the same leaflet
-    add_weak_interaction(
+    _add_weak_interaction(
         inner_types, 
         inner_types, 
         force_const=250., bond_length=2. * particle_radius, 
         depth=7., cutoff=2.5 * 2. * particle_radius, system=system
     )
-    add_weak_interaction(
+    _add_weak_interaction(
         outer_types, 
         outer_types, 
         force_const=250., bond_length=2. * particle_radius, 
@@ -182,7 +183,7 @@ def add_membrane_constraints(system, center, size, particle_radius, box_size):
         force_const=1000., angle=0.5 * np.pi, system=system
     )
     # box potentials for edges
-    box_origins, box_extents = calculate_box_potentials(center, size, particle_radius, box_size)
+    box_origins, box_extents = _calculate_box_potentials(center, size, particle_radius, box_size)
     corner_suffixes = ["4_1", "2_3"]
     for n in range(1, 5):
         box_types = [f"membrane#outer_edge_{n}", f"membrane#inner_edge_{n}"]
@@ -190,7 +191,7 @@ def add_membrane_constraints(system, center, size, particle_radius, box_size):
             if f"{n}" in suffix:
                 box_types += [f"membrane#outer_edge_{suffix}", f"membrane#inner_edge_{suffix}"]
                 break
-        add_box_potential(
+        _add_box_potential(
             box_types, 
             origin=box_origins[n - 1], 
             extent=box_extents[n - 1], 
@@ -202,7 +203,7 @@ def init_membrane(simulation, center, size, particle_radius, box_size):
     """
     Add initial membrane particles to the ReaDDy simulation.
     """
-    coords, plane_dim = calculate_lattice(size, particle_radius)
+    coords, plane_dim = _calculate_lattice(size, particle_radius)
     cols = coords[0].shape[0]
     rows = coords[1].shape[0]
     n_lattice_points = cols * (2 * rows)
@@ -212,8 +213,8 @@ def init_membrane(simulation, center, size, particle_radius, box_size):
     for dim in range(3):
         
         if dim == plane_dim:
-            positions[:n_lattice_points, dim] = center[dim] - particle_radius
-            positions[n_lattice_points:, dim] = center[dim] + particle_radius
+            positions[:n_lattice_points, dim] = center[dim] + particle_radius
+            positions[n_lattice_points:, dim] = center[dim] - particle_radius
             continue
         
         values = coords[lattice_dim] - 0.5 * size[dim] + center[dim]

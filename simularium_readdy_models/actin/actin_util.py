@@ -3034,13 +3034,6 @@ class ActinUtil:
             ActinUtil.add_actin_actin_repulsions(
                 force_constant, system, util, longitudinal_bonds
             )
-        util.add_repulsion(
-            actin_types,
-            ["obstacle"],
-            force_constant,
-            actin_radius + obstacle_radius,
-            system,
-        )
         # arp2/3
         util.add_repulsion(
             arp_types,
@@ -3054,13 +3047,6 @@ class ActinUtil:
             actin_types,
             force_constant,
             arp23_radius + actin_radius,
-            system,
-        )
-        util.add_repulsion(
-            arp_types,
-            ["obstacle"],
-            force_constant,
-            arp23_radius + obstacle_radius,
             system,
         )
         # capping protein
@@ -3085,11 +3071,22 @@ class ActinUtil:
             cap_radius + arp23_radius,
             system,
         )
+
+    @staticmethod
+    def add_repulsions_with_actin(other_types, other_radius, force_constant, system, util):
+        """
+        Add repulsions between actin etc types and a given list of types.
+        """
+        actin_types = (
+            ActinUtil.get_all_actin_particle_types()
+            + ActinUtil.get_all_fixed_actin_particle_types()
+        )
+        actin_radius = 0.5 * ActinStructure.actin_to_actin_repulsion_distance(True)
         util.add_repulsion(
-            cap_types,
-            ["obstacle"],
+            actin_types,
+            other_types,
             force_constant,
-            cap_radius + obstacle_radius,
+            actin_radius + other_radius,
             system,
         )
 
