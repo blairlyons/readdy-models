@@ -3127,6 +3127,8 @@ class ActinUtil:
         """
         Confine free monomers to boxes centered at center with extent.
         """
+        if not bool(parameters["add_monomer_box_potentials"]):
+            return
         particle_types = {
             "actin": ["actin#free", "actin#free_ATP"],
             "arp": ["arp2#free"],
@@ -3165,7 +3167,6 @@ class ActinUtil:
         """
         if not parameters[f"use_box_obstacle"]:
             return
-        print(f"Adding box for obstacle")
         center = np.array(
             [
                 parameters[f"obstacle_box_center_x"],
@@ -3182,6 +3183,35 @@ class ActinUtil:
         )
         ActinUtil.add_box_potential(
             ["obstacle"],
+            center - 0.5 * size,
+            size,
+            ActinUtil.DEFAULT_FORCE_CONSTANT,
+            system,
+        )
+
+    @staticmethod
+    def add_extra_box(system):
+        """
+        Add an extra box potential as an obstacle for actin.
+        """
+        if not parameters[f"add_extra_box"]:
+            return
+        center = np.array(
+            [
+                parameters[f"extra_box_center_x"],
+                parameters[f"extra_box_center_y"],
+                parameters[f"extra_box_center_z"],
+            ]
+        )
+        size = np.array(
+            [
+                parameters[f"extra_box_size_x"],
+                parameters[f"extra_box_size_y"],
+                parameters[f"extra_box_size_z"],
+            ]
+        )
+        ActinUtil.add_box_potential(
+            ActinUtil.get_all_actin_particle_types(),
             center - 0.5 * size,
             size,
             ActinUtil.DEFAULT_FORCE_CONSTANT,

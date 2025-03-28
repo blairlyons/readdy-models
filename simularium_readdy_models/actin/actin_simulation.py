@@ -193,6 +193,7 @@ class ActinSimulation:
         # box potentials
         self.actin_util.add_monomer_box_potentials(self.system)
         self.actin_util.add_obstacle_box_potential(self.system)
+        self.actin_util.add_extra_box(self.system)
         # membrane
         if self._parameter("add_membrane"):
             add_membrane_constraints(
@@ -384,11 +385,11 @@ class ActinSimulation:
             self.simulation.add_topology(
                 "Obstacle", 
                 ["obstacle"], 
-                np.array([
+                np.array([[
                     float(self._parameter(f"obstacle{n}_position_x")),
                     float(self._parameter(f"obstacle{n}_position_y")),
                     float(self._parameter(f"obstacle{n}_position_z")),
-                ])
+                ]])
             )
             n += 1
         if n > 0:
