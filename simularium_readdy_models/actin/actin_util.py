@@ -126,7 +126,11 @@ class ActinUtil:
         "dihedrals_force_constant": 1000.0,
         "add_membrane": False,
         "add_obstacles": False,
-        "actin_constraints": True
+        "actin_constraints": True,
+        "add_monomer_box_potentials": False,
+        "add_extra_box": False,
+        "barbed_binding_site": False,
+        "binding_site_reaction_distance": 0.1,
     }
 
     @staticmethod
@@ -140,6 +144,21 @@ class ActinUtil:
         if len(results) > 1:
             raise Exception(
                 f"Found more than one new vertex\n"
+                f"{ReaddyUtil.topology_to_string(topology)}"
+            )
+        return results[0]
+
+    @staticmethod
+    def get_binding_site_vertex(topology):
+        """
+        Get the barbed end binding site vertex.
+        """
+        results = ReaddyUtil.get_vertices_of_type(
+            topology, "binding_site", exact_match=False, error_msg="Failed to find binding site vertex"
+        )
+        if len(results) > 1:
+            raise Exception(
+                f"Found more than one binding site vertex\n"
                 f"{ReaddyUtil.topology_to_string(topology)}"
             )
         return results[0]
@@ -395,8 +414,9 @@ class ActinUtil:
             else ActinStructure.mother1_to_mother_vector()
         )
         at_branch = False
+        direction = 1 if barbed else -1
         vertices.append(
-            ReaddyUtil.get_neighbor_of_type(topology, v_new, "actin", False)
+            ActinUtil.get_next_actin(topology, v_new, direction, False)
         )
         if vertices[0] is None:
             (
@@ -406,9 +426,7 @@ class ActinUtil:
             at_branch = True
         else:
             vertices.append(
-                ReaddyUtil.get_neighbor_of_type(
-                    topology, vertices[0], "actin", False, [v_new]
-                )
+                ActinUtil.get_next_actin(topology, vertices[0], direction, False)
             )
             if vertices[1] is None:
                 (
@@ -420,9 +438,7 @@ class ActinUtil:
                 at_branch = True
             else:
                 vertices.append(
-                    ReaddyUtil.get_neighbor_of_type(
-                        topology, vertices[1], "actin", False, [vertices[0]]
-                    )
+                    ActinUtil.get_next_actin(topology, vertices[1], direction, False)
                 )
                 if vertices[2] is None:
                     (
@@ -1023,7 +1039,33 @@ class ActinUtil:
         """
         reaction function for the barbed end growing.
         """
+        if parameters["barbed_binding_site"]:
+            return ActinUtil.do_finish_binding_site_grow(topology)
         return ActinUtil.do_finish_grow(topology, True)
+
+    @staticmethod
+    def do_finish_binding_site_grow(topology):
+        """
+        reaction function for the barbed end growing with a binding site.
+        """
+        recipe = readdy.StructuralReactionRecipe(topology)
+        end_type = "barbed"
+        if parameters["verbose"]:
+            print("Grow " + end_type)
+        v_bs = ActinUtil.get_binding_site_vertex(topology)
+        v_barbed = ReaddyUtil.get_first_neighbor(
+            topology,
+            v_bs,
+            [],
+            error_msg=f"Failed to find neighbor of new {end_type} end",
+        )
+        v_neighbor = ActinUtil.get_next_actin(topology, v_barbed, -1, True)
+        bs_number = str(ActinUtil.get_actin_number(topology, v_barbed, 1))
+        recipe.change_particle_type(v_bs, f"binding_site#{bs_number}")
+        ActinUtil.set_end_vertex_position(topology, recipe, v_bs, True)
+        recipe.add_edge(v_bs, v_neighbor)
+        recipe.change_topology_type("Actin-Polymer")
+        return recipe
 
     @staticmethod
     def reaction_function_finish_arp_bind(topology):
@@ -1613,6 +1655,16 @@ class ActinUtil:
         ]
 
     @staticmethod
+    def get_all_binding_site_particle_types():
+        """
+        get particle types for barbed binding sites.
+        """
+        result = []
+        for i in ActinUtil.polymer_number_range():
+            result += [f"binding_site#{i}"]
+        return result
+
+    @staticmethod
     def get_all_particle_types():
         """
         add the given particle_types to the system.
@@ -1684,6 +1736,15 @@ class ActinUtil:
         )
 
     @staticmethod
+    def add_binding_site_types(system, diffCoeff):
+        """
+        add particle types for binding sites (only implemented for barbed end, ATP).
+        """
+        ActinUtil.add_particle_types(
+            ActinUtil.get_all_binding_site_particle_types(), system, diffCoeff
+        )
+
+    @staticmethod
     def add_bonds_between_actins(system, util, longitudinal_bonds, force_multiplier):
         """
         add bonds between actins.
@@ -1693,82 +1754,80 @@ class ActinUtil:
         n_polymer_numbers = ActinUtil.n_polymer_numbers()
         lat_force_constant = force_multiplier * 968.2  # kJ / mol / nm^2
         long_force_constant = force_multiplier * 1437.5  # kJ / mol / nm^2
+        pointed_actins = [
+            "actin#",
+            "actin#ATP_",
+            "actin#mid_",
+            "actin#mid_ATP_",
+            "actin#pointed_",
+            "actin#pointed_ATP_",
+            "actin#fixed_",
+            "actin#fixed_ATP_",
+            "actin#mid_fixed_",
+            "actin#mid_fixed_ATP_",
+            "actin#pointed_fixed_",
+            "actin#pointed_fixed_ATP_",
+        ]
+        barbed_actins = [
+            "actin#",
+            "actin#ATP_",
+            "actin#mid_",
+            "actin#mid_ATP_",
+            "actin#barbed_",
+            "actin#barbed_ATP_",
+            "actin#fixed_",
+            "actin#fixed_ATP_",
+            "actin#mid_fixed_",
+            "actin#mid_fixed_ATP_",
+            "actin#fixed_barbed_",
+            "actin#fixed_barbed_ATP_",
+        ]
         # lateral actin-actin bond
         util.add_polymer_bond_1D(
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#pointed_",
-                "actin#pointed_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-                "actin#pointed_fixed_",
-                "actin#pointed_fixed_ATP_",
-            ],
+            pointed_actins,
             0,
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#barbed_",
-                "actin#barbed_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-                "actin#fixed_barbed_",
-                "actin#fixed_barbed_ATP_",
-            ],
+            barbed_actins,
             1,
             lat_force_constant,
             bond_length_lat,
             system,
             n_polymer_numbers,
         )
+        if parameters["barbed_binding_site"]:
+            util.add_polymer_bond_1D(
+                ["actin#barbed_", "actin#barbed_ATP_"],
+                0,
+                ["binding_site#"],
+                1,
+                lat_force_constant,
+                bond_length_lat,
+                system,
+                n_polymer_numbers,
+            )
         print(f"Added lat bonds with fc = {lat_force_constant}")
         if longitudinal_bonds:
             print("Adding longitudinal bonds...")
             util.add_polymer_bond_1D(
-                [
-                    "actin#",
-                    "actin#ATP_",
-                    "actin#mid_",
-                    "actin#mid_ATP_",
-                    "actin#pointed_",
-                    "actin#pointed_ATP_",
-                    "actin#fixed_",
-                    "actin#fixed_ATP_",
-                    "actin#mid_fixed_",
-                    "actin#mid_fixed_ATP_",
-                    "actin#pointed_fixed_",
-                    "actin#pointed_fixed_ATP_",
-                ],
+                pointed_actins,
                 0,
-                [
-                    "actin#",
-                    "actin#ATP_",
-                    "actin#mid_",
-                    "actin#mid_ATP_",
-                    "actin#barbed_",
-                    "actin#barbed_ATP_",
-                    "actin#fixed_",
-                    "actin#fixed_ATP_",
-                    "actin#mid_fixed_",
-                    "actin#mid_fixed_ATP_",
-                    "actin#fixed_barbed_",
-                    "actin#fixed_barbed_ATP_",
-                ],
+                barbed_actins,
                 2,
                 long_force_constant,
                 bond_length_long,
                 system,
                 n_polymer_numbers,
             )
+            if parameters["barbed_binding_site"]:
+                util.add_polymer_bond_1D(
+                    pointed_actins,
+                    0,
+                    ["binding_site#"],
+                    2,
+                    long_force_constant,
+                    bond_length_long,
+                    system,
+                    n_polymer_numbers,
+                )
             print(f"Added long bonds with fc = {long_force_constant}")
         # branch actin-actin bond
         util.add_bond(
@@ -1795,7 +1854,7 @@ class ActinUtil:
             system,
         )
         # temporary bonds
-        util.add_polymer_bond_1D(  # temporary during growth reactions
+        util.add_polymer_bond_1D(
             [
                 "actin#",
                 "actin#ATP_",
@@ -1825,7 +1884,7 @@ class ActinUtil:
             system,
             n_polymer_numbers,
         )
-        util.add_bond(  # temporary during growth reactions
+        util.add_bond( 
             [
                 "actin#branch_1",
                 "actin#branch_ATP_1",
@@ -1847,49 +1906,52 @@ class ActinUtil:
         """
         add angles for filament twist and cohesiveness.
         """
+        pointed_actins = [
+            "actin#",
+            "actin#ATP_",
+            "actin#mid_",
+            "actin#mid_ATP_",
+            "actin#pointed_",
+            "actin#pointed_ATP_",
+            "actin#fixed_",
+            "actin#fixed_ATP_",
+            "actin#mid_fixed_",
+            "actin#mid_fixed_ATP_",
+            "actin#pointed_fixed_",
+            "actin#pointed_fixed_ATP_",
+        ]
+        mid_actins = [
+            "actin#",
+            "actin#ATP_",
+            "actin#mid_",
+            "actin#mid_ATP_",
+            "actin#fixed_",
+            "actin#fixed_ATP_",
+            "actin#mid_fixed_",
+            "actin#mid_fixed_ATP_",
+        ]
+        barbed_actins = [
+            "actin#",
+            "actin#ATP_",
+            "actin#mid_",
+            "actin#mid_ATP_",
+            "actin#barbed_",
+            "actin#barbed_ATP_",
+            "actin#fixed_",
+            "actin#fixed_ATP_",
+            "actin#mid_fixed_",
+            "actin#mid_fixed_ATP_",
+            "actin#fixed_barbed_",
+            "actin#fixed_barbed_ATP_",
+        ]
         # Lateral bond to lateral bond angle
         angle = ActinStructure.actin_to_actin_angle()
         util.add_polymer_angle_1D(
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#pointed_",
-                "actin#pointed_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-                "actin#pointed_fixed_",
-                "actin#pointed_fixed_ATP_",
-            ],
+            pointed_actins,
             -1,
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-            ],
+            mid_actins,
             0,
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#barbed_",
-                "actin#barbed_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-                "actin#fixed_barbed_",
-                "actin#fixed_barbed_ATP_",
-            ],
+            barbed_actins,
             1,
             force_constant,
             angle,
@@ -1925,52 +1987,30 @@ class ActinUtil:
             angle,
             system,
         )
+        if parameters["barbed_binding_site"]:
+            util.add_polymer_angle_1D(
+                pointed_actins,
+                -1,
+                ["actin#barbed_", "actin#barbed_ATP_"],
+                0,
+                ["binding_site#"],
+                1,
+                force_constant,
+                angle,
+                system,
+                ActinUtil.n_polymer_numbers(),
+            )
         if not longitudinal_bonds:
             print(f"Added angles with fc = {force_constant}")
             return
         # Lateral bond to longitudinal bond angle
         angle = ActinStructure.actin_to_actin_angle(True, False)
         util.add_polymer_angle_1D(
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#pointed_",
-                "actin#pointed_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-                "actin#pointed_fixed_",
-                "actin#pointed_fixed_ATP_",
-            ],
+            pointed_actins,
             -1,
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-            ],
+            mid_actins,
             0,
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#barbed_",
-                "actin#barbed_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-                "actin#fixed_barbed_",
-                "actin#fixed_barbed_ATP_",
-            ],
+            barbed_actins,
             2,
             force_constant,
             angle,
@@ -2006,49 +2046,27 @@ class ActinUtil:
             angle,
             system,
         )
+        if parameters["barbed_binding_site"]:
+            util.add_polymer_angle_1D(
+                pointed_actins,
+                -1,
+                mid_actins,
+                0,
+                ["binding_site#"],
+                2,
+                force_constant,
+                angle,
+                system,
+                ActinUtil.n_polymer_numbers(),
+            )
         # Longitudinal bond to longitudinal bond angle
         angle = ActinStructure.actin_to_actin_angle(False, False)
         util.add_polymer_angle_1D(
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#pointed_",
-                "actin#pointed_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-                "actin#pointed_fixed_",
-                "actin#pointed_fixed_ATP_",
-            ],
+            pointed_actins,
             -2,
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-            ],
+            mid_actins,
             0,
-            [
-                "actin#",
-                "actin#ATP_",
-                "actin#mid_",
-                "actin#mid_ATP_",
-                "actin#barbed_",
-                "actin#barbed_ATP_",
-                "actin#fixed_",
-                "actin#fixed_ATP_",
-                "actin#mid_fixed_",
-                "actin#mid_fixed_ATP_",
-                "actin#fixed_barbed_",
-                "actin#fixed_barbed_ATP_",
-            ],
+            barbed_actins,
             2,
             force_constant,
             angle,
@@ -2084,6 +2102,19 @@ class ActinUtil:
             angle,
             system,
         )
+        if parameters["barbed_binding_site"]:
+            util.add_polymer_angle_1D(
+                pointed_actins,
+                -2,
+                mid_actins,
+                0,
+                ["binding_site#"],
+                2,
+                force_constant,
+                angle,
+                system,
+                ActinUtil.n_polymer_numbers(),
+            )
         print(f"Added angles (incl longitudinal) with fc = {force_constant}")
 
     @staticmethod
@@ -3369,34 +3400,43 @@ class ActinUtil:
         attach a monomer to the barbed (+) end of a filament.
         """
         for i in ActinUtil.polymer_number_range():
-            system.topologies.add_spatial_reaction(
-                f"Barbed_Growth_ATP1{i}: Actin-Polymer(actin#barbed_{i}) + "
-                "Actin-Monomer-ATP(actin#free_ATP) -> "
-                f"Actin-Polymer#GrowingBarbed(actin#{i}--actin#new_ATP)",
-                rate=parameters["barbed_growth_ATP_rate"],
-                radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
-            )
-            system.topologies.add_spatial_reaction(
-                f"Barbed_Growth_ATP2{i}: Actin-Polymer(actin#barbed_ATP_{i}) + "
-                "Actin-Monomer-ATP(actin#free_ATP) -> "
-                f"Actin-Polymer#GrowingBarbed(actin#ATP_{i}--actin#new_ATP)",
-                rate=parameters["barbed_growth_ATP_rate"],
-                radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
-            )
-            system.topologies.add_spatial_reaction(
-                f"Barbed_Growth_ADP1{i}: Actin-Polymer(actin#barbed_{i}) + "
-                "Actin-Monomer(actin#free) -> "
-                f"Actin-Polymer#GrowingBarbed(actin#{i}--actin#new)",
-                rate=parameters["barbed_growth_ADP_rate"],
-                radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
-            )
-            system.topologies.add_spatial_reaction(
-                f"Barbed_Growth_ADP2{i}: Actin-Polymer(actin#barbed_ATP_{i}) + "
-                "Actin-Monomer(actin#free) -> "
-                f"Actin-Polymer#GrowingBarbed(actin#ATP_{i}--actin#new)",
-                rate=parameters["barbed_growth_ADP_rate"],
-                radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
-            )
+            if parameters["barbed_binding_site"]:
+                system.topologies.add_spatial_reaction(
+                    f"Barbed_Growth_BS{i}: Actin-Polymer(binding_site#{i}) + "
+                    "Actin-Monomer-ATP(actin#free_ATP) -> "
+                    f"Actin-Polymer#GrowingBarbed(actin#barbed_ATP_{i}--binding_site#{i})",
+                    rate=parameters["barbed_growth_ATP_rate"],
+                    radius=parameters["binding_site_reaction_distance"],
+                )
+            else:
+                system.topologies.add_spatial_reaction(
+                    f"Barbed_Growth_ATP2{i}: Actin-Polymer(actin#barbed_ATP_{i}) + "
+                    "Actin-Monomer-ATP(actin#free_ATP) -> "
+                    f"Actin-Polymer#GrowingBarbed(actin#ATP_{i}--actin#new_ATP)",
+                    rate=parameters["barbed_growth_ATP_rate"],
+                    radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
+                )
+                system.topologies.add_spatial_reaction(
+                    f"Barbed_Growth_ATP1{i}: Actin-Polymer(actin#barbed_{i}) + "
+                    "Actin-Monomer-ATP(actin#free_ATP) -> "
+                    f"Actin-Polymer#GrowingBarbed(actin#{i}--actin#new_ATP)",
+                    rate=parameters["barbed_growth_ATP_rate"],
+                    radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
+                )
+                system.topologies.add_spatial_reaction(
+                    f"Barbed_Growth_ADP1{i}: Actin-Polymer(actin#barbed_{i}) + "
+                    "Actin-Monomer(actin#free) -> "
+                    f"Actin-Polymer#GrowingBarbed(actin#{i}--actin#new)",
+                    rate=parameters["barbed_growth_ADP_rate"],
+                    radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
+                )
+                system.topologies.add_spatial_reaction(
+                    f"Barbed_Growth_ADP2{i}: Actin-Polymer(actin#barbed_ATP_{i}) + "
+                    "Actin-Monomer(actin#free) -> "
+                    f"Actin-Polymer#GrowingBarbed(actin#ATP_{i}--actin#new)",
+                    rate=parameters["barbed_growth_ADP_rate"],
+                    radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
+                )
         system.topologies.add_spatial_reaction(
             "Branch_Barbed_Growth_ATP1: Actin-Polymer(actin#branch_barbed_1) + "
             "Actin-Monomer-ATP(actin#free_ATP) -> "

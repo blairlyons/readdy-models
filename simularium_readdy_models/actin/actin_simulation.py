@@ -122,6 +122,8 @@ class ActinSimulation:
             add_membrane_particle_types(
                 self.system, self._parameter("membrane_particle_radius"), temperature, viscosity
             )
+        if self._parameter("barbed_binding_site"):
+            self.actin_util.add_binding_site_types(self.system, actin_diffCoeff)
 
     def add_constraints(self):
         """
