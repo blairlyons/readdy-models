@@ -4,7 +4,13 @@
 import numpy as np
 import readdy
 
-from ..common import ReaddyUtil
+from ..common import (
+    ReaddyUtil, 
+    add_membrane_particle_types, 
+    add_membrane_constraints, 
+    init_membrane,
+    all_membrane_particle_types
+)
 from .actin_structure import ActinStructure
 from .actin_util import ActinUtil
 
@@ -110,7 +116,14 @@ class ActinSimulation:
         self.actin_util.add_actin_types(self.system, actin_diffCoeff)
         self.actin_util.add_arp23_types(self.system, arp23_diffCoeff)
         self.actin_util.add_cap_types(self.system, cap_diffCoeff)
-        self.system.add_species("obstacle", 0.0)
+        self.system.topologies.add_type("Obstacle")
+        self.system.add_topology_species("obstacle", self._parameter("obstacle_diff_coeff"))
+        if self._parameter("add_membrane"):
+            add_membrane_particle_types(
+                self.system, self._parameter("membrane_particle_radius"), temperature, viscosity
+            )
+        if self._parameter("barbed_binding_site"):
+            self.actin_util.add_binding_site_types(self.system, actin_diffCoeff)
 
     def add_constraints(self):
         """
@@ -120,6 +133,7 @@ class ActinSimulation:
         util = ReaddyUtil()
         longitudinal_bonds = bool(self._parameter("longitudinal_bonds"))
         only_linear_actin = bool(self._parameter("only_linear_actin_constraints"))
+        actin_constraints = bool(self._parameter("actin_constraints"))
         # force constants
         actin_angle_force_constant = float(self._parameter("angles_force_constant"))
         actin_dihedral_force_constant = float(
@@ -132,16 +146,17 @@ class ActinSimulation:
             longitudinal_bonds,
             float(self._parameter("bonds_force_multiplier")),
         )
-        self.actin_util.add_filament_twist_angles(
-            actin_angle_force_constant, self.system, util, longitudinal_bonds
-        )
-        self.actin_util.add_filament_twist_dihedrals(
-            actin_dihedral_force_constant,
-            self.system,
-            util,
-            longitudinal_bonds,
-            only_linear_actin,
-        )
+        if actin_constraints:
+            self.actin_util.add_filament_twist_angles(
+                actin_angle_force_constant, self.system, util, longitudinal_bonds
+            )
+            self.actin_util.add_filament_twist_dihedrals(
+                actin_dihedral_force_constant,
+                self.system,
+                util,
+                longitudinal_bonds,
+                only_linear_actin,
+            )
         if not only_linear_actin:
             # branch junction
             self.actin_util.add_branch_bonds(self.system, util)
@@ -170,8 +185,41 @@ class ActinSimulation:
             actin_actin_repulsion_potentials=True,
             longitudinal_bonds=longitudinal_bonds,
         )
+        self.actin_util.add_repulsions_with_actin(
+            ["obstacle"],
+            self._parameter("obstacle_radius"),
+            ActinUtil.DEFAULT_FORCE_CONSTANT,
+            self.system,
+            util
+        )
         # box potentials
         self.actin_util.add_monomer_box_potentials(self.system)
+        self.actin_util.add_obstacle_box_potential(self.system)
+        self.actin_util.add_extra_box(self.system)
+        # membrane
+        if self._parameter("add_membrane"):
+            add_membrane_constraints(
+                self.system, 
+                np.array([
+                    float(self._parameter("membrane_center_x")),
+                    float(self._parameter("membrane_center_y")),
+                    float(self._parameter("membrane_center_z")),
+                ]), 
+                np.array([
+                    float(self._parameter("membrane_size_x")),
+                    float(self._parameter("membrane_size_y")),
+                    float(self._parameter("membrane_size_z")),
+                ]), 
+                self._parameter("membrane_particle_radius"),
+                self._parameter("box_size")
+            )
+            self.actin_util.add_repulsions_with_actin(
+                all_membrane_particle_types(),
+                self._parameter("membrane_particle_radius"),
+                ActinUtil.DEFAULT_FORCE_CONSTANT,
+                self.system,
+                util
+            )
 
     def add_reactions(self):
         """
@@ -198,6 +246,8 @@ class ActinSimulation:
             self.actin_util.add_cap_unbind_reaction(self.system)
         if self.do_pointed_end_translation():
             self.actin_util.add_translate_reaction(self.system)
+        if self._parameter("position_obstacle_stride") > 0:
+            self.actin_util.add_position_obstacle_reaction(self.system)
 
     def do_pointed_end_translation(self):
         result = self._parameter("displace_pointed_end_tangent") or self._parameter(
@@ -330,19 +380,44 @@ class ActinSimulation:
         """
         Add obstacle particles.
         """
+        if not self._parameter("add_obstacles"):
+            return
         n = 0
         while f"obstacle{n}_position_x" in self.parameters:
-            self.simulation.add_particle(
-                type="obstacle",
-                position=[
+            self.simulation.add_topology(
+                "Obstacle", 
+                ["obstacle"], 
+                np.array([[
                     float(self._parameter(f"obstacle{n}_position_x")),
                     float(self._parameter(f"obstacle{n}_position_y")),
                     float(self._parameter(f"obstacle{n}_position_z")),
-                ],
+                ]])
             )
             n += 1
         if n > 0:
             print(f"Added {n} obstacle(s).")
+            
+    def add_membrane(self):
+        """
+        Add membrane types and particles.
+        """
+        if not self._parameter("add_membrane"):
+            return
+        init_membrane(
+            self.simulation,
+            np.array([
+                float(self._parameter("membrane_center_x")),
+                float(self._parameter("membrane_center_y")),
+                float(self._parameter("membrane_center_z")),
+            ]), 
+            np.array([
+                float(self._parameter("membrane_size_x")),
+                float(self._parameter("membrane_size_y")),
+                float(self._parameter("membrane_size_z")),
+            ]), 
+            self._parameter("membrane_particle_radius"),
+            self._parameter("box_size")
+        )
 
     def add_crystal_structure_monomers(self):
         """

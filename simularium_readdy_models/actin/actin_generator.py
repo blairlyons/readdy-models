@@ -449,6 +449,7 @@ class ActinGenerator:
         pointed_actin_number,
         particles={},
         longitudinal_bonds=True,
+        barbed_binding_site=False,
     ):
         """
         get the main actins for a fiber (i.e. no branches or arps).
@@ -549,8 +550,14 @@ class ActinGenerator:
                     # remove "mid" from second actin
                     ActinGenerator._remove_mid_from_actin(particle_ids[1], particles)
             actin_arp_ids = None
+        if barbed_binding_site and len(particle_ids) > 1:
+            particles = ActinGenerator._set_particle_type_name(
+                "actin#barbed_ATP_" ,
+                particle_ids[len(particle_ids) - 2],
+                particles,
+            )
         particles = ActinGenerator._set_particle_type_name(
-            "actin#barbed_ATP_",
+            "actin#barbed_ATP_" if not barbed_binding_site else "binding_site#" ,
             particle_ids[len(particle_ids) - 1],
             particles,
         )
@@ -565,6 +572,7 @@ class ActinGenerator:
         pointed_actin_number,
         particles={},
         longitudinal_bonds=True,
+        barbed_binding_site=False,
     ):
         """
         get the main actins for a fiber as well as any bound arps and daughter fibers.
@@ -581,6 +589,7 @@ class ActinGenerator:
             pointed_actin_number,
             particles,
             longitudinal_bonds,
+            barbed_binding_site,
         )
         daughter_particle_ids = []
         all_actin_arp_ids = []
@@ -800,6 +809,7 @@ class ActinGenerator:
         use_uuids=True,
         start_normal=None,
         longitudinal_bonds=True,
+        barbed_binding_site=False,
     ):
         """
         get all the monomer data for the (branched) fibers in fibers_data.
@@ -836,6 +846,7 @@ class ActinGenerator:
                 np.zeros(3),
                 1,
                 longitudinal_bonds=longitudinal_bonds,
+                barbed_binding_site=barbed_binding_site,
             )
             result["topologies"][ActinGenerator._get_next_monomer_id()] = {
                 "type_name": "Actin-Polymer",
