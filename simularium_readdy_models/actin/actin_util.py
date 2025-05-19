@@ -193,11 +193,6 @@ class ActinUtil:
         (i.e. return 3 for type = "actin#ATP_1" and offset = -1).
         """
         pt = topology.particle_type_of_vertex(vertex)
-        if "actin" not in pt:
-            raise Exception(
-                f"Failed to get actin number: {pt} is not actin\n"
-                f"{ReaddyUtil.topology_to_string(topology)}"
-            )
         return ReaddyUtil.calculate_polymer_number(
             int(pt[-1]), offset, ActinUtil.n_polymer_numbers()
         )
@@ -281,14 +276,15 @@ class ActinUtil:
         get the next actin toward the pointed or barbed direction.
         """
         n = ActinUtil.get_actin_number(topology, v_actin, direction)
-        end_type = "barbed" if direction > 0 else "pointed"
         actin_types = [
             f"actin#ATP_{n}",
             f"actin#{n}",
             f"actin#mid_ATP_{n}",
             f"actin#mid_{n}",
-            f"actin#{end_type}_ATP_{n}",
-            f"actin#{end_type}_{n}",
+            f"actin#barbed_ATP_{n}",
+            f"actin#barbed_{n}",
+            f"actin#pointed_ATP_{n}",
+            f"actin#pointed_{n}",
         ]
         if direction < 0 and n == 1:
             actin_types += ["actin#branch_1", "actin#branch_ATP_1"]
@@ -414,7 +410,7 @@ class ActinUtil:
             else ActinStructure.mother1_to_mother_vector()
         )
         at_branch = False
-        direction = 1 if barbed else -1
+        direction = -1 if barbed else 1
         vertices.append(
             ActinUtil.get_next_actin(topology, v_new, direction, False)
         )
@@ -1060,10 +1056,9 @@ class ActinUtil:
             error_msg=f"Failed to find neighbor of new {end_type} end",
         )
         v_neighbor = ActinUtil.get_next_actin(topology, v_barbed, -1, True)
-        bs_number = str(ActinUtil.get_actin_number(topology, v_barbed, 1))
-        recipe.change_particle_type(v_bs, f"binding_site#{bs_number}")
         ActinUtil.set_end_vertex_position(topology, recipe, v_bs, True)
         recipe.add_edge(v_bs, v_neighbor)
+        ReaddyUtil.set_flags(topology, recipe, v_neighbor, ["mid"], ["barbed"], True)
         recipe.change_topology_type("Actin-Polymer")
         return recipe
 
@@ -1798,6 +1793,16 @@ class ActinUtil:
                 ["actin#barbed_", "actin#barbed_ATP_"],
                 0,
                 ["binding_site#"],
+                1,
+                lat_force_constant,
+                bond_length_lat,
+                system,
+                n_polymer_numbers,
+            )
+            util.add_polymer_bond_1D(
+                ["actin#barbed_", "actin#barbed_ATP_"],
+                0,
+                ["actin#barbed_", "actin#barbed_ATP_"],
                 1,
                 lat_force_constant,
                 bond_length_lat,
@@ -3401,10 +3406,11 @@ class ActinUtil:
         """
         for i in ActinUtil.polymer_number_range():
             if parameters["barbed_binding_site"]:
+                bs_number = str(ReaddyUtil.calculate_polymer_number(i, 1, ActinUtil.n_polymer_numbers()))
                 system.topologies.add_spatial_reaction(
                     f"Barbed_Growth_BS{i}: Actin-Polymer(binding_site#{i}) + "
                     "Actin-Monomer-ATP(actin#free_ATP) -> "
-                    f"Actin-Polymer#GrowingBarbed(actin#barbed_ATP_{i}--binding_site#{i})",
+                    f"Actin-Polymer#GrowingBarbed(actin#barbed_ATP_{i}--binding_site#{bs_number})",
                     rate=parameters["barbed_growth_ATP_rate"],
                     radius=parameters["binding_site_reaction_distance"],
                 )
