@@ -717,7 +717,7 @@ class ActinUtil:
                 longitudinal_bonds=longitudinal_bonds,
             )
             print(f"monomers:{monomers}")
-            ActinUtil.add_monomers_from_data(simulation, monomers)
+            ReaddyUtil.add_monomers_from_data(simulation, monomers)
 
     @staticmethod
     def add_fibers_from_data(
@@ -736,56 +736,7 @@ class ActinUtil:
             use_uuids=use_uuids,
             longitudinal_bonds=longitudinal_bonds,
         )
-        ActinUtil.add_monomers_from_data(simulation, fiber_monomers)
-
-    @staticmethod
-    def add_monomers_from_data(simulation, monomer_data):
-        """
-        add actin and other monomers.
-
-        monomer_data : {
-            "topologies": {
-                "[topology ID]" : {
-                    "type_name": "[topology type]",
-                    "particle_ids": []
-                },
-            "particles": {
-                "[particle ID]" : {
-                    "type_name": "[particle type]",
-                    "position": np.zeros(3),
-                    "neighbor_ids": [],
-                },
-            },
-        }
-        * IDs are uuid strings or ints
-        """
-        topologies = []
-        for topology_id in monomer_data["topologies"]:
-            topology = monomer_data["topologies"][topology_id]
-            types = []
-            positions = []
-            for particle_id in topology["particle_ids"]:
-                particle = monomer_data["particles"][particle_id]
-                types.append(particle["type_name"])
-                positions.append(particle["position"])
-            top = simulation.add_topology(
-                topology["type_name"], types, np.array(positions)
-            )
-            added_edges = []
-            for index, particle_id in enumerate(topology["particle_ids"]):
-                for neighbor_id in monomer_data["particles"][particle_id][
-                    "neighbor_ids"
-                ]:
-                    neighbor_index = topology["particle_ids"].index(neighbor_id)
-                    if (index, neighbor_index) not in added_edges and (
-                        neighbor_index,
-                        index,
-                    ) not in added_edges:
-                        top.get_graph().add_edge(index, neighbor_index)
-                        added_edges.append((index, neighbor_index))
-                        added_edges.append((neighbor_index, index))
-            topologies.append(top)
-        return topologies
+        ReaddyUtil.add_monomers_from_data(simulation, fiber_monomers)
 
     @staticmethod
     def add_actin_dimer(position, simulation):

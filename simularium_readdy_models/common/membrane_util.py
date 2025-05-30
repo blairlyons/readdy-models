@@ -2,10 +2,11 @@
 
 from sys import float_info
 import math
+import uuid
 
 import numpy as np
 
-from ..common import ReaddyUtil
+from ..common import ReaddyUtil, ParticleData
 
 
 def _leaflet_types(side):
@@ -199,9 +200,10 @@ def add_membrane_constraints(system, center, size, particle_radius, box_size):
         )
 
 
-def init_membrane(simulation, center, size, particle_radius, box_size):
+def get_membrane_monomers(center, size, particle_radius):
     """
-    Add initial membrane particles to the ReaDDy simulation.
+    get all the monomer data for the membrane patch 
+    defined by center size and particle radius.
     """
     coords, plane_dim = _calculate_lattice(size, particle_radius)
     cols = coords[0].shape[0]
@@ -262,21 +264,50 @@ def init_membrane(simulation, center, size, particle_radius, box_size):
                 types[start_ix + cols - 1] = "membrane#inner_edge_2_3"
             
         lattice_dim += 1
-    
-    membrane = simulation.add_topology("Membrane", types.tolist(), positions)
+
+    particles = {}
+    for p in range(2 * n_lattice_points):
+        particles[p] = ParticleData(
+                unique_id=p,
+                type_name=types[p],
+                position=positions[p],
+                neighbor_ids=[],
+            )
     
     # edges
-    for n in range(n_lattice_points):
-        other_n = n + n_lattice_points
-        membrane.get_graph().add_edge(n, other_n)
+    for ix in range(n_lattice_points):
+        other_ix = ix + n_lattice_points
+        particles[ix].neighbor_ids.append(other_ix)
+        particles[other_ix].neighbor_ids.append(ix)
         if n % cols != cols - 1:
-            membrane.get_graph().add_edge(n, n + 1)
-            membrane.get_graph().add_edge(other_n, other_n + 1)
+            particles[ix].neighbor_ids.append(ix + 1)
+            particles[ix + 1].neighbor_ids.append(ix)
+            particles[other_ix].neighbor_ids.append(other_ix + 1)
+            particles[other_ix + 1].neighbor_ids.append(other_ix)
         if math.ceil((n + 1) / cols) >= 2 * rows:
             continue
         if (n % (2 * cols) != (2 * cols) - 1):
-            membrane.get_graph().add_edge(n, n + cols)
-            membrane.get_graph().add_edge(other_n, other_n + cols)
+            particles[ix].neighbor_ids.append(ix + cols)
+            particles[ix + cols].neighbor_ids.append(ix)
+            particles[other_ix].neighbor_ids.append(other_ix + cols)
+            particles[other_ix + cols].neighbor_ids.append(other_ix)
         if (n % (2 * cols) != 0):
-            membrane.get_graph().add_edge(n, n + cols - 1)
-            membrane.get_graph().add_edge(other_n, other_n + cols - 1)
+            particles[ix].neighbor_ids.append(ix + cols - 1)
+            particles[ix + cols - 1].neighbor_ids.append(ix)
+            particles[other_ix].neighbor_ids.append(other_ix + cols - 1)
+            particles[other_ix + cols - 1].neighbor_ids.append(other_ix)
+
+    result = {
+        "topologies": {
+            2 * n_lattice_points + 1 : {
+                "type_name": "Membrane",
+                "particle_ids": (np.arange(2 * n_lattice_points)).tolist(),
+            }
+        },
+        "particles": {},
+    }
+    particles = {
+        p_id: dict(particle_data) for p_id, particle_data in particles.items()
+    }
+    result["particles"] = particles
+    return result

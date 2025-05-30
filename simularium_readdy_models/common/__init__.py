@@ -6,6 +6,6 @@ from .repeated_timer import RepeatedTimer  # noqa: F401
 from .membrane_util import (
     add_membrane_particle_types, 
     add_membrane_constraints, 
-    init_membrane, 
+    get_membrane_monomers, 
     all_membrane_particle_types
 )  # noqa: F401
