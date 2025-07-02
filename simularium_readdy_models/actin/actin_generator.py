@@ -810,6 +810,7 @@ class ActinGenerator:
         start_normal=None,
         longitudinal_bonds=True,
         barbed_binding_site=False,
+        top_id=0,
     ):
         """
         get all the monomer data for the (branched) fibers in fibers_data.
@@ -848,7 +849,7 @@ class ActinGenerator:
                 longitudinal_bonds=longitudinal_bonds,
                 barbed_binding_site=barbed_binding_site,
             )
-            result["topologies"][ActinGenerator._get_next_monomer_id()] = {
+            result["topologies"][top_id] = {
                 "type_name": "Actin-Polymer",
                 "particle_ids": particle_ids,
             }

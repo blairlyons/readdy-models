@@ -200,7 +200,7 @@ def add_membrane_constraints(system, center, size, particle_radius, box_size):
         )
 
 
-def get_membrane_monomers(center, size, particle_radius):
+def get_membrane_monomers(center, size, particle_radius, start_particle_id, top_id):
     """
     get all the monomer data for the membrane patch 
     defined by center size and particle radius.
@@ -267,7 +267,7 @@ def get_membrane_monomers(center, size, particle_radius):
 
     particles = {}
     for p in range(2 * n_lattice_points):
-        particles[p] = ParticleData(
+        particles[p + start_particle_id] = ParticleData(
                 unique_id=p,
                 type_name=types[p],
                 position=positions[p],
@@ -276,32 +276,33 @@ def get_membrane_monomers(center, size, particle_radius):
     
     # edges
     for ix in range(n_lattice_points):
-        other_ix = ix + n_lattice_points
-        particles[ix].neighbor_ids.append(other_ix)
-        particles[other_ix].neighbor_ids.append(ix)
-        if n % cols != cols - 1:
-            particles[ix].neighbor_ids.append(ix + 1)
-            particles[ix + 1].neighbor_ids.append(ix)
+        p_ix = ix + start_particle_id
+        other_ix = ix + n_lattice_points + start_particle_id
+        particles[p_ix].neighbor_ids.append(other_ix)
+        particles[other_ix].neighbor_ids.append(p_ix)
+        if ix % cols != cols - 1:
+            particles[p_ix].neighbor_ids.append(p_ix + 1)
+            particles[p_ix + 1].neighbor_ids.append(p_ix)
             particles[other_ix].neighbor_ids.append(other_ix + 1)
             particles[other_ix + 1].neighbor_ids.append(other_ix)
-        if math.ceil((n + 1) / cols) >= 2 * rows:
+        if math.ceil((ix + 1) / cols) >= 2 * rows:
             continue
-        if (n % (2 * cols) != (2 * cols) - 1):
-            particles[ix].neighbor_ids.append(ix + cols)
-            particles[ix + cols].neighbor_ids.append(ix)
+        if (ix % (2 * cols) != (2 * cols) - 1):
+            particles[p_ix].neighbor_ids.append(p_ix + cols)
+            particles[p_ix + cols].neighbor_ids.append(p_ix)
             particles[other_ix].neighbor_ids.append(other_ix + cols)
             particles[other_ix + cols].neighbor_ids.append(other_ix)
-        if (n % (2 * cols) != 0):
-            particles[ix].neighbor_ids.append(ix + cols - 1)
-            particles[ix + cols - 1].neighbor_ids.append(ix)
+        if (ix % (2 * cols) != 0):
+            particles[p_ix].neighbor_ids.append(p_ix + cols - 1)
+            particles[p_ix + cols - 1].neighbor_ids.append(p_ix)
             particles[other_ix].neighbor_ids.append(other_ix + cols - 1)
             particles[other_ix + cols - 1].neighbor_ids.append(other_ix)
 
     result = {
         "topologies": {
-            2 * n_lattice_points + 1 : {
+            top_id : {
                 "type_name": "Membrane",
-                "particle_ids": (np.arange(2 * n_lattice_points)).tolist(),
+                "particle_ids": (np.arange(2 * n_lattice_points) + start_particle_id).tolist(),
             }
         },
         "particles": {},
