@@ -287,16 +287,28 @@ def get_membrane_monomers(center, size, particle_radius, start_particle_id, top_
             particles[other_ix + 1].neighbor_ids.append(other_ix)
         if math.ceil((ix + 1) / cols) >= 2 * rows:
             continue
-        if (ix % (2 * cols) != (2 * cols) - 1):
-            particles[p_ix].neighbor_ids.append(p_ix + cols)
-            particles[p_ix + cols].neighbor_ids.append(p_ix)
-            particles[other_ix].neighbor_ids.append(other_ix + cols)
-            particles[other_ix + cols].neighbor_ids.append(other_ix)
-        if (ix % (2 * cols) != 0):
-            particles[p_ix].neighbor_ids.append(p_ix + cols - 1)
-            particles[p_ix + cols - 1].neighbor_ids.append(p_ix)
-            particles[other_ix].neighbor_ids.append(other_ix + cols - 1)
-            particles[other_ix + cols - 1].neighbor_ids.append(other_ix)
+        if ix % (2 * cols) != 2 * cols - 1:
+            if ix % (2 * cols) < cols:
+                particles[p_ix].neighbor_ids.append(p_ix + cols)
+                particles[p_ix + cols].neighbor_ids.append(p_ix)
+                particles[other_ix].neighbor_ids.append(other_ix + cols)
+                particles[other_ix + cols].neighbor_ids.append(other_ix)
+            else:
+                particles[p_ix].neighbor_ids.append(p_ix + cols + 1)
+                particles[p_ix + cols + 1].neighbor_ids.append(p_ix)
+                particles[other_ix].neighbor_ids.append(other_ix + cols + 1)
+                particles[other_ix + cols + 1].neighbor_ids.append(other_ix)
+        if ix % (2 * cols) != cols - 1:
+            if ix % (2 * cols) < cols - 1:
+                particles[p_ix + 1].neighbor_ids.append(p_ix + cols)
+                particles[p_ix + cols].neighbor_ids.append(p_ix + 1)
+                particles[other_ix + 1].neighbor_ids.append(other_ix + cols)
+                particles[other_ix + cols].neighbor_ids.append(other_ix + 1)
+            else:
+                particles[p_ix].neighbor_ids.append(p_ix + cols)
+                particles[p_ix + cols].neighbor_ids.append(p_ix)
+                particles[other_ix].neighbor_ids.append(other_ix + cols)
+                particles[other_ix + cols].neighbor_ids.append(other_ix)
 
     result = {
         "topologies": {
