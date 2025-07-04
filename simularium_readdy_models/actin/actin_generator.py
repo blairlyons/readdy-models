@@ -886,6 +886,31 @@ class ActinGenerator:
         return monomers
 
     @staticmethod
+    def get_free_actin_monomers(concentration, box_center, box_size, start_particle_id, start_top_id):
+        result = {
+            "topologies": {},
+            "particles": {},
+        }
+        n_particles = ReaddyUtil.calculate_nParticles(concentration, box_size)
+        positions = box_center + (np.random.uniform(size=(n_particles, 3)) - 0.5) * box_size
+        p_id = start_particle_id
+        top_id = start_top_id
+        for p in range(len(positions)):
+            result["topologies"][top_id] = {
+                "type_name": "Actin-Monomer-ATP",
+                "particle_ids": [p_id],
+            }
+            result["particles"][p_id] = {
+                "unique_id": p_id,
+                "type_name": "actin#free_ATP",
+                "position": positions[p],
+                "neighbor_ids": []
+            }
+            p_id += 1
+            top_id += 1
+        return result
+
+    @staticmethod
     def particles_to_string(particle_ids, particles, info=""):
         result = ""
         for particle_id in particle_ids:

@@ -200,7 +200,7 @@ def add_membrane_constraints(system, center, size, particle_radius, box_size):
         )
 
 
-def get_membrane_monomers(center, size, particle_radius, start_particle_id, top_id):
+def get_membrane_monomers(center, size, particle_radius, start_particle_id=0, top_id=0):
     """
     get all the monomer data for the membrane patch 
     defined by center size and particle radius.
