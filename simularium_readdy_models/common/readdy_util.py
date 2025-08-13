@@ -1050,7 +1050,7 @@ class ReaddyUtil:
         return simulation
 
     @staticmethod
-    def get_current_particle_edges(current_topologies):
+    def get_current_particle_edges(current_topologies, id_difference=0):
         """
         During a running simulation,
         get all the edges in the ReaDDy topologies
@@ -1060,19 +1060,19 @@ class ReaddyUtil:
         result = []
         for top in current_topologies:
             for v1, v2 in top.graph.edges:
-                p1_id = top.particle_id_of_vertex(v1)
-                p2_id = top.particle_id_of_vertex(v2)
+                p1_id = top.particle_id_of_vertex(v1) - id_difference
+                p2_id = top.particle_id_of_vertex(v2) - id_difference
                 if p1_id <= p2_id:
                     result.append((p1_id, p2_id))
         return result
 
     @staticmethod
-    def get_current_monomers(current_topologies):
+    def get_current_monomers(current_topologies, id_difference=0):
         """
         During a running simulation,
         get data for topologies of particles.
         """
-        edges = ReaddyUtil.get_current_particle_edges(current_topologies)
+        edges = ReaddyUtil.get_current_particle_edges(current_topologies, id_difference)
         result = {
             "topologies": {},
             "particles": {},
@@ -1080,14 +1080,15 @@ class ReaddyUtil:
         for index, topology in enumerate(current_topologies):
             particle_ids = []
             for p in topology.particles:
-                particle_ids.append(p.id)
+                pid = p.id - id_difference
+                particle_ids.append(pid)
                 neighbor_ids = []
                 for edge in edges:
-                    if p.id == edge[0]:
+                    if pid == edge[0]:
                         neighbor_ids.append(edge[1])
-                    elif p.id == edge[1]:
+                    elif pid == edge[1]:
                         neighbor_ids.append(edge[0])
-                result["particles"][p.id] = {
+                result["particles"][pid] = {
                     "type_name": p.type,
                     "position": p.pos,
                     "neighbor_ids": neighbor_ids,

@@ -21,6 +21,7 @@ class ActinSimulation:
         parameters,
         record=False,
         save_checkpoints=False,
+        readdy_system=None,
     ):
         """
         Creates a ReaDDy branched actin simulation.
@@ -49,7 +50,7 @@ class ActinSimulation:
         self.actin_util = ActinUtil(
             self.parameters, self.get_pointed_end_displacements()
         )
-        self.create_actin_system()
+        self.create_actin_system(readdy_system)
         self.simulation = ReaddyUtil.create_readdy_simulation(
             self.system,
             self._parameter("n_cpu"),
@@ -80,22 +81,25 @@ class ActinSimulation:
             return ActinUtil.DEFAULT_PARAMETERS[parameter_name]
         raise Exception(f"Parameter {parameter_name} is required but was not provided.")
 
-    def create_actin_system(self):
+    def create_actin_system(self, readdy_system):
         """
         Create the ReaDDy system for actin
         including particle types, constraints, and reactions.
         """
-        self.system = readdy.ReactionDiffusionSystem(
-            box_size=self._parameter("box_size"),
-            periodic_boundary_conditions=[bool(self._parameter("periodic_boundary"))]
-            * 3,
-        )
         self.parameters["temperature_K"] = self._parameter("temperature_C") + 273.15
-        self.system.temperature = self.parameters["temperature_K"]
-        self.add_particle_types()
-        ActinUtil.check_add_global_box_potential(self.system)
-        self.add_constraints()
-        self.add_reactions()
+        if readdy_system is None:
+            self.system = readdy.ReactionDiffusionSystem(
+                box_size=self._parameter("box_size"),
+                periodic_boundary_conditions=[bool(self._parameter("periodic_boundary"))]
+                * 3,
+            )
+            self.system.temperature = self.parameters["temperature_K"]
+            self.add_particle_types()
+            ActinUtil.check_add_global_box_potential(self.system)
+            self.add_constraints()
+            self.add_reactions()
+        else:
+            self.system = readdy_system
 
     def add_particle_types(self):
         """
