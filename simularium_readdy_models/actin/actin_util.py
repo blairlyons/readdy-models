@@ -34,7 +34,13 @@ pointed_monomer_positions = []
 
 
 obstacle_time_index = 0
-obstacle_position = np.array([41., 0, 0]) # TODO set from another simulator etc
+obstacle_controlled_position = np.array([0., 0., 0.]) # can be set from another simulator etc
+
+
+def set_obstacle_controlled_position(pos):
+    global obstacle_controlled_position
+    obstacle_controlled_position = pos
+    return pos
 
 
 class ActinUtil:
@@ -50,6 +56,13 @@ class ActinUtil:
         set_parameters(parameters)
         if displacements is not None:
             set_displacements(displacements)
+        set_obstacle_controlled_position(
+            np.array([
+                float(parameters["obstacle_controlled_position_x"]),
+                float(parameters["obstacle_controlled_position_y"]),
+                float(parameters["obstacle_controlled_position_z"]),
+            ])
+        )
 
     DEFAULT_PARAMETERS = {
         "name": "actin",
@@ -66,6 +79,7 @@ class ActinUtil:
         "seed_n_fibers": 0,
         "seed_fiber_length": 0.0,
         "orthogonal_seed": False,
+        "orthogonal_seed_length": 50.0,  # nm
         "branched_seed": False,
         "only_linear_actin_constraints": False,
         "reactions": True,
@@ -105,6 +119,9 @@ class ActinUtil:
         "obstacle_diff_coeff": 0.0,
         "use_box_obstacle": False,
         "position_obstacle_stride": 0,
+        "obstacle_controlled_position_x": 0.0,
+        "obstacle_controlled_position_y": 0.0,
+        "obstacle_controlled_position_z": 0.0,
         "n_fixed_monomers_pointed": 0,
         "n_fixed_monomers_barbed": 0,
         "displace_pointed_end_tangent": False,
@@ -1494,7 +1511,7 @@ class ActinUtil:
         if parameters["verbose"]:
             print("Translate obstacle")
         v = topology.graph.get_vertices()[0] # there should only be one particle in topology
-        recipe.change_particle_position(v, obstacle_position)
+        recipe.change_particle_position(v, obstacle_controlled_position)
         obstacle_time_index += 1
         return recipe
 
