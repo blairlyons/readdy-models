@@ -144,7 +144,6 @@ class ActinUtil:
         "add_membrane": False,
         "add_obstacles": False,
         "actin_constraints": True,
-        "add_monomer_box_potentials": False,
         "add_extra_box": False,
         "barbed_binding_site": False,
         "binding_site_reaction_distance": 0.1,
@@ -3131,8 +3130,6 @@ class ActinUtil:
         """
         Confine free monomers to boxes centered at center with extent.
         """
-        if not bool(parameters["add_monomer_box_potentials"]):
-            return
         particle_types = {
             "actin": ["actin#free", "actin#free_ATP"],
             "arp": ["arp2#free"],
