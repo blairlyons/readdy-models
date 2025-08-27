@@ -552,12 +552,12 @@ class ActinGenerator:
             actin_arp_ids = None
         if barbed_binding_site and len(particle_ids) > 1:
             particles = ActinGenerator._set_particle_type_name(
-                "actin#barbed_ATP_" ,
+                "actin#barbed_ATP_",
                 particle_ids[len(particle_ids) - 2],
                 particles,
             )
         particles = ActinGenerator._set_particle_type_name(
-            "actin#barbed_ATP_" if not barbed_binding_site else "binding_site#" ,
+            "actin#barbed_ATP_" if not barbed_binding_site else "binding_site#",
             particle_ids[len(particle_ids) - 1],
             particles,
         )
@@ -886,13 +886,17 @@ class ActinGenerator:
         return monomers
 
     @staticmethod
-    def get_free_actin_monomers(concentration, box_center, box_size, start_particle_id, start_top_id):
+    def get_free_actin_monomers(
+        concentration, box_center, box_size, start_particle_id, start_top_id
+    ):
         result = {
             "topologies": {},
             "particles": {},
         }
         n_particles = ReaddyUtil.calculate_nParticles(concentration, box_size)
-        positions = box_center + (np.random.uniform(size=(n_particles, 3)) - 0.5) * box_size
+        positions = (
+            box_center + (np.random.uniform(size=(n_particles, 3)) - 0.5) * box_size
+        )
         p_id = start_particle_id
         top_id = start_top_id
         for p in range(len(positions)):
@@ -904,7 +908,7 @@ class ActinGenerator:
                 "unique_id": p_id,
                 "type_name": "actin#free_ATP",
                 "position": positions[p],
-                "neighbor_ids": []
+                "neighbor_ids": [],
             }
             p_id += 1
             top_id += 1

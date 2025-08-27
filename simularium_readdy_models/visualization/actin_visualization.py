@@ -21,7 +21,7 @@ class ActinVisualization:
     """
     visualize an actin trajectory in Simularium.
     """
-    
+
     @staticmethod
     def _display_data() -> dict[str, DisplayData]:
         """
@@ -256,7 +256,9 @@ class ActinVisualization:
         )
         time_inc = int(converter._data.agent_data.times.shape[0] / n_timepoints)
         if time_inc >= 2:
-            converter._data = converter.filter_data([EveryNthTimestepFilter(n=time_inc)])
+            converter._data = converter.filter_data(
+                [EveryNthTimestepFilter(n=time_inc)]
+            )
         converter.save(output_path=path_to_readdy_h5, validate_ids=False)
 
 

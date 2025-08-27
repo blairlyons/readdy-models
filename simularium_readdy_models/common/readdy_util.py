@@ -1454,7 +1454,6 @@ class ReaddyUtil:
         else:
             return np.array([float(input_size)] * 3)
 
-
     @staticmethod
     def add_monomers_from_data(simulation, monomer_data):
         """

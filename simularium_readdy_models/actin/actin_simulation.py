@@ -5,11 +5,11 @@ import numpy as np
 import readdy
 
 from ..common import (
-    ReaddyUtil, 
-    add_membrane_particle_types, 
-    add_membrane_constraints, 
+    ReaddyUtil,
+    add_membrane_particle_types,
+    add_membrane_constraints,
     get_membrane_monomers,
-    all_membrane_particle_types
+    all_membrane_particle_types,
 )
 from .actin_structure import ActinStructure
 from .actin_util import ActinUtil
@@ -90,7 +90,9 @@ class ActinSimulation:
         if readdy_system is None:
             self.system = readdy.ReactionDiffusionSystem(
                 box_size=self._parameter("box_size"),
-                periodic_boundary_conditions=[bool(self._parameter("periodic_boundary"))]
+                periodic_boundary_conditions=[
+                    bool(self._parameter("periodic_boundary"))
+                ]
                 * 3,
             )
             self.system.temperature = self.parameters["temperature_K"]
@@ -121,10 +123,15 @@ class ActinSimulation:
         self.actin_util.add_arp23_types(self.system, arp23_diffCoeff)
         self.actin_util.add_cap_types(self.system, cap_diffCoeff)
         self.system.topologies.add_type("Obstacle")
-        self.system.add_topology_species("obstacle", self._parameter("obstacle_diff_coeff"))
+        self.system.add_topology_species(
+            "obstacle", self._parameter("obstacle_diff_coeff")
+        )
         if self._parameter("add_membrane"):
             add_membrane_particle_types(
-                self.system, self._parameter("membrane_particle_radius"), temperature, viscosity
+                self.system,
+                self._parameter("membrane_particle_radius"),
+                temperature,
+                viscosity,
             )
         if self._parameter("barbed_binding_site"):
             self.actin_util.add_binding_site_types(self.system, actin_diffCoeff)
@@ -194,7 +201,7 @@ class ActinSimulation:
             self._parameter("obstacle_radius"),
             ActinUtil.DEFAULT_FORCE_CONSTANT,
             self.system,
-            util
+            util,
         )
         # box potentials
         self.actin_util.add_monomer_box_potentials(self.system)
@@ -203,26 +210,30 @@ class ActinSimulation:
         # membrane
         if self._parameter("add_membrane"):
             add_membrane_constraints(
-                self.system, 
-                np.array([
-                    float(self._parameter("membrane_center_x")),
-                    float(self._parameter("membrane_center_y")),
-                    float(self._parameter("membrane_center_z")),
-                ]), 
-                np.array([
-                    float(self._parameter("membrane_size_x")),
-                    float(self._parameter("membrane_size_y")),
-                    float(self._parameter("membrane_size_z")),
-                ]), 
+                self.system,
+                np.array(
+                    [
+                        float(self._parameter("membrane_center_x")),
+                        float(self._parameter("membrane_center_y")),
+                        float(self._parameter("membrane_center_z")),
+                    ]
+                ),
+                np.array(
+                    [
+                        float(self._parameter("membrane_size_x")),
+                        float(self._parameter("membrane_size_y")),
+                        float(self._parameter("membrane_size_z")),
+                    ]
+                ),
                 self._parameter("membrane_particle_radius"),
-                self._parameter("box_size")
+                self._parameter("box_size"),
             )
             self.actin_util.add_repulsions_with_actin(
                 all_membrane_particle_types(),
                 self._parameter("membrane_particle_radius"),
                 ActinUtil.DEFAULT_FORCE_CONSTANT,
                 self.system,
-                util
+                util,
             )
 
     def add_reactions(self):
@@ -365,18 +376,22 @@ class ActinSimulation:
         n = 0
         while f"obstacle{n}_position_x" in self.parameters:
             self.simulation.add_topology(
-                "Obstacle", 
-                ["obstacle"], 
-                np.array([[
-                    float(self._parameter(f"obstacle{n}_position_x")),
-                    float(self._parameter(f"obstacle{n}_position_y")),
-                    float(self._parameter(f"obstacle{n}_position_z")),
-                ]])
+                "Obstacle",
+                ["obstacle"],
+                np.array(
+                    [
+                        [
+                            float(self._parameter(f"obstacle{n}_position_x")),
+                            float(self._parameter(f"obstacle{n}_position_y")),
+                            float(self._parameter(f"obstacle{n}_position_z")),
+                        ]
+                    ]
+                ),
             )
             n += 1
         if n > 0:
             print(f"Added {n} obstacle(s).")
-            
+
     def add_membrane(self):
         """
         Add membrane types and particles.
@@ -386,18 +401,22 @@ class ActinSimulation:
         ReaddyUtil.add_monomers_from_data(
             self.simulation,
             get_membrane_monomers(
-                np.array([
-                    float(self._parameter("membrane_center_x")),
-                    float(self._parameter("membrane_center_y")),
-                    float(self._parameter("membrane_center_z")),
-                ]), 
-                np.array([
-                    float(self._parameter("membrane_size_x")),
-                    float(self._parameter("membrane_size_y")),
-                    float(self._parameter("membrane_size_z")),
-                ]), 
+                np.array(
+                    [
+                        float(self._parameter("membrane_center_x")),
+                        float(self._parameter("membrane_center_y")),
+                        float(self._parameter("membrane_center_z")),
+                    ]
+                ),
+                np.array(
+                    [
+                        float(self._parameter("membrane_size_x")),
+                        float(self._parameter("membrane_size_y")),
+                        float(self._parameter("membrane_size_z")),
+                    ]
+                ),
                 self._parameter("membrane_particle_radius"),
-            )
+            ),
         )
 
     def add_crystal_structure_monomers(self):
