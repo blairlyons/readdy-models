@@ -34,7 +34,15 @@ pointed_monomer_positions = []
 
 
 obstacle_time_index = 0
-obstacle_position = np.array([41., 0, 0]) # TODO set from another simulator etc
+obstacle_controlled_position = np.array(
+    [0.0, 0.0, 0.0]
+)  # can be set from another simulator etc
+
+
+def set_obstacle_controlled_position(pos):
+    global obstacle_controlled_position
+    obstacle_controlled_position = pos
+    return pos
 
 
 class ActinUtil:
@@ -50,6 +58,15 @@ class ActinUtil:
         set_parameters(parameters)
         if displacements is not None:
             set_displacements(displacements)
+        set_obstacle_controlled_position(
+            np.array(
+                [
+                    float(parameters["obstacle_controlled_position_x"]),
+                    float(parameters["obstacle_controlled_position_y"]),
+                    float(parameters["obstacle_controlled_position_z"]),
+                ]
+            )
+        )
 
     DEFAULT_PARAMETERS = {
         "name": "actin",
@@ -66,6 +83,7 @@ class ActinUtil:
         "seed_n_fibers": 0,
         "seed_fiber_length": 0.0,
         "orthogonal_seed": False,
+        "orthogonal_seed_length": 50.0,  # nm
         "branched_seed": False,
         "only_linear_actin_constraints": False,
         "reactions": True,
@@ -105,6 +123,9 @@ class ActinUtil:
         "obstacle_diff_coeff": 0.0,
         "use_box_obstacle": False,
         "position_obstacle_stride": 0,
+        "obstacle_controlled_position_x": 0.0,
+        "obstacle_controlled_position_y": 0.0,
+        "obstacle_controlled_position_z": 0.0,
         "n_fixed_monomers_pointed": 0,
         "n_fixed_monomers_barbed": 0,
         "displace_pointed_end_tangent": False,
@@ -127,7 +148,6 @@ class ActinUtil:
         "add_membrane": False,
         "add_obstacles": False,
         "actin_constraints": True,
-        "add_monomer_box_potentials": False,
         "add_extra_box": False,
         "barbed_binding_site": False,
         "binding_site_reaction_distance": 0.1,
@@ -154,7 +174,10 @@ class ActinUtil:
         Get the barbed end binding site vertex.
         """
         results = ReaddyUtil.get_vertices_of_type(
-            topology, "binding_site", exact_match=False, error_msg="Failed to find binding site vertex"
+            topology,
+            "binding_site",
+            exact_match=False,
+            error_msg="Failed to find binding site vertex",
         )
         if len(results) > 1:
             raise Exception(
@@ -411,9 +434,7 @@ class ActinUtil:
         )
         at_branch = False
         direction = -1 if barbed else 1
-        vertices.append(
-            ActinUtil.get_next_actin(topology, v_new, direction, False)
-        )
+        vertices.append(ActinUtil.get_next_actin(topology, v_new, direction, False))
         if vertices[0] is None:
             (
                 vertices,
@@ -717,7 +738,7 @@ class ActinUtil:
                 longitudinal_bonds=longitudinal_bonds,
             )
             print(f"monomers:{monomers}")
-            ActinUtil.add_monomers_from_data(simulation, monomers)
+            ReaddyUtil.add_monomers_from_data(simulation, monomers)
 
     @staticmethod
     def add_fibers_from_data(
@@ -736,56 +757,7 @@ class ActinUtil:
             use_uuids=use_uuids,
             longitudinal_bonds=longitudinal_bonds,
         )
-        ActinUtil.add_monomers_from_data(simulation, fiber_monomers)
-
-    @staticmethod
-    def add_monomers_from_data(simulation, monomer_data):
-        """
-        add actin and other monomers.
-
-        monomer_data : {
-            "topologies": {
-                "[topology ID]" : {
-                    "type_name": "[topology type]",
-                    "particle_ids": []
-                },
-            "particles": {
-                "[particle ID]" : {
-                    "type_name": "[particle type]",
-                    "position": np.zeros(3),
-                    "neighbor_ids": [],
-                },
-            },
-        }
-        * IDs are uuid strings or ints
-        """
-        topologies = []
-        for topology_id in monomer_data["topologies"]:
-            topology = monomer_data["topologies"][topology_id]
-            types = []
-            positions = []
-            for particle_id in topology["particle_ids"]:
-                particle = monomer_data["particles"][particle_id]
-                types.append(particle["type_name"])
-                positions.append(particle["position"])
-            top = simulation.add_topology(
-                topology["type_name"], types, np.array(positions)
-            )
-            added_edges = []
-            for index, particle_id in enumerate(topology["particle_ids"]):
-                for neighbor_id in monomer_data["particles"][particle_id][
-                    "neighbor_ids"
-                ]:
-                    neighbor_index = topology["particle_ids"].index(neighbor_id)
-                    if (index, neighbor_index) not in added_edges and (
-                        neighbor_index,
-                        index,
-                    ) not in added_edges:
-                        top.get_graph().add_edge(index, neighbor_index)
-                        added_edges.append((index, neighbor_index))
-                        added_edges.append((neighbor_index, index))
-            topologies.append(top)
-        return topologies
+        ReaddyUtil.add_monomers_from_data(simulation, fiber_monomers)
 
     @staticmethod
     def add_actin_dimer(position, simulation):
@@ -1537,13 +1509,18 @@ class ActinUtil:
         """
         global obstacle_time_index
         recipe = readdy.StructuralReactionRecipe(topology)
-        if obstacle_time_index > 0 and obstacle_time_index % parameters["position_obstacle_stride"] != 0:
+        if (
+            obstacle_time_index > 0
+            and obstacle_time_index % parameters["position_obstacle_stride"] != 0
+        ):
             obstacle_time_index += 1
             return recipe
         if parameters["verbose"]:
             print("Translate obstacle")
-        v = topology.graph.get_vertices()[0] # there should only be one particle in topology
-        recipe.change_particle_position(v, obstacle_position)
+        v = topology.graph.get_vertices()[
+            0
+        ]  # there should only be one particle in topology
+        recipe.change_particle_position(v, obstacle_controlled_position)
         obstacle_time_index += 1
         return recipe
 
@@ -1889,7 +1866,7 @@ class ActinUtil:
             system,
             n_polymer_numbers,
         )
-        util.add_bond( 
+        util.add_bond(
             [
                 "actin#branch_1",
                 "actin#branch_ATP_1",
@@ -3109,7 +3086,9 @@ class ActinUtil:
         )
 
     @staticmethod
-    def add_repulsions_with_actin(other_types, other_radius, force_constant, system, util):
+    def add_repulsions_with_actin(
+        other_types, other_radius, force_constant, system, util
+    ):
         """
         Add repulsions between actin etc types and a given list of types.
         """
@@ -3163,8 +3142,6 @@ class ActinUtil:
         """
         Confine free monomers to boxes centered at center with extent.
         """
-        if not bool(parameters["add_monomer_box_potentials"]):
-            return
         particle_types = {
             "actin": ["actin#free", "actin#free_ATP"],
             "arp": ["arp2#free"],
@@ -3406,7 +3383,11 @@ class ActinUtil:
         """
         for i in ActinUtil.polymer_number_range():
             if parameters["barbed_binding_site"]:
-                bs_number = str(ReaddyUtil.calculate_polymer_number(i, 1, ActinUtil.n_polymer_numbers()))
+                bs_number = str(
+                    ReaddyUtil.calculate_polymer_number(
+                        i, 1, ActinUtil.n_polymer_numbers()
+                    )
+                )
                 system.topologies.add_spatial_reaction(
                     f"Barbed_Growth_BS{i}: Actin-Polymer(binding_site#{i}) + "
                     "Actin-Monomer-ATP(actin#free_ATP) -> "
@@ -3420,28 +3401,32 @@ class ActinUtil:
                     "Actin-Monomer-ATP(actin#free_ATP) -> "
                     f"Actin-Polymer#GrowingBarbed(actin#ATP_{i}--actin#new_ATP)",
                     rate=parameters["barbed_growth_ATP_rate"],
-                    radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
+                    radius=2 * parameters["actin_radius"]
+                    + parameters["reaction_distance"],
                 )
                 system.topologies.add_spatial_reaction(
                     f"Barbed_Growth_ATP1{i}: Actin-Polymer(actin#barbed_{i}) + "
                     "Actin-Monomer-ATP(actin#free_ATP) -> "
                     f"Actin-Polymer#GrowingBarbed(actin#{i}--actin#new_ATP)",
                     rate=parameters["barbed_growth_ATP_rate"],
-                    radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
+                    radius=2 * parameters["actin_radius"]
+                    + parameters["reaction_distance"],
                 )
                 system.topologies.add_spatial_reaction(
                     f"Barbed_Growth_ADP1{i}: Actin-Polymer(actin#barbed_{i}) + "
                     "Actin-Monomer(actin#free) -> "
                     f"Actin-Polymer#GrowingBarbed(actin#{i}--actin#new)",
                     rate=parameters["barbed_growth_ADP_rate"],
-                    radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
+                    radius=2 * parameters["actin_radius"]
+                    + parameters["reaction_distance"],
                 )
                 system.topologies.add_spatial_reaction(
                     f"Barbed_Growth_ADP2{i}: Actin-Polymer(actin#barbed_ATP_{i}) + "
                     "Actin-Monomer(actin#free) -> "
                     f"Actin-Polymer#GrowingBarbed(actin#ATP_{i}--actin#new)",
                     rate=parameters["barbed_growth_ADP_rate"],
-                    radius=2 * parameters["actin_radius"] + parameters["reaction_distance"],
+                    radius=2 * parameters["actin_radius"]
+                    + parameters["reaction_distance"],
                 )
         system.topologies.add_spatial_reaction(
             "Branch_Barbed_Growth_ATP1: Actin-Polymer(actin#branch_barbed_1) + "

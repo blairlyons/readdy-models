@@ -552,12 +552,12 @@ class ActinGenerator:
             actin_arp_ids = None
         if barbed_binding_site and len(particle_ids) > 1:
             particles = ActinGenerator._set_particle_type_name(
-                "actin#barbed_ATP_" ,
+                "actin#barbed_ATP_",
                 particle_ids[len(particle_ids) - 2],
                 particles,
             )
         particles = ActinGenerator._set_particle_type_name(
-            "actin#barbed_ATP_" if not barbed_binding_site else "binding_site#" ,
+            "actin#barbed_ATP_" if not barbed_binding_site else "binding_site#",
             particle_ids[len(particle_ids) - 1],
             particles,
         )
@@ -810,6 +810,7 @@ class ActinGenerator:
         start_normal=None,
         longitudinal_bonds=True,
         barbed_binding_site=False,
+        top_id=0,
     ):
         """
         get all the monomer data for the (branched) fibers in fibers_data.
@@ -848,7 +849,7 @@ class ActinGenerator:
                 longitudinal_bonds=longitudinal_bonds,
                 barbed_binding_site=barbed_binding_site,
             )
-            result["topologies"][ActinGenerator._get_next_monomer_id()] = {
+            result["topologies"][top_id] = {
                 "type_name": "Actin-Polymer",
                 "particle_ids": particle_ids,
             }
@@ -859,21 +860,23 @@ class ActinGenerator:
         return result
 
     @staticmethod
-    def setup_fixed_monomers(monomers, parameters):
+    def setup_fixed_monomers(
+        monomers, orthogonal_seed, n_fixed_monomers_pointed, n_fixed_monomers_barbed
+    ):
         """
         Fix monomers at either end of the orthogonal actin seed.
         """
-        if not parameters["orthogonal_seed"]:
+        if not orthogonal_seed:
             return monomers
         top_id = list(monomers["topologies"].keys())[0]
         n_monomers = len(monomers["topologies"][top_id]["particle_ids"])
-        for monomer_index in range(int(parameters["n_fixed_monomers_pointed"])):
+        for monomer_index in range(n_fixed_monomers_pointed):
             type_name = monomers["particles"][monomer_index]["type_name"]
             type_name = ReaddyUtil.particle_type_with_flags(
                 type_name, ["fixed"], [], reverse_sort=True
             )
             monomers["particles"][monomer_index]["type_name"] = type_name
-        for i in range(int(parameters["n_fixed_monomers_barbed"])):
+        for i in range(n_fixed_monomers_barbed):
             monomer_index = n_monomers - 1 - i
             type_name = monomers["particles"][monomer_index]["type_name"]
             type_name = ReaddyUtil.particle_type_with_flags(
@@ -881,6 +884,35 @@ class ActinGenerator:
             )
             monomers["particles"][monomer_index]["type_name"] = type_name
         return monomers
+
+    @staticmethod
+    def get_free_actin_monomers(
+        concentration, box_center, box_size, start_particle_id, start_top_id
+    ):
+        result = {
+            "topologies": {},
+            "particles": {},
+        }
+        n_particles = ReaddyUtil.calculate_nParticles(concentration, box_size)
+        positions = (
+            box_center + (np.random.uniform(size=(n_particles, 3)) - 0.5) * box_size
+        )
+        p_id = start_particle_id
+        top_id = start_top_id
+        for p in range(len(positions)):
+            result["topologies"][top_id] = {
+                "type_name": "Actin-Monomer-ATP",
+                "particle_ids": [p_id],
+            }
+            result["particles"][p_id] = {
+                "unique_id": p_id,
+                "type_name": "actin#free_ATP",
+                "position": positions[p],
+                "neighbor_ids": [],
+            }
+            p_id += 1
+            top_id += 1
+        return result
 
     @staticmethod
     def particles_to_string(particle_ids, particles, info=""):

@@ -17,6 +17,7 @@ See [examples/README.md](examples/README.md) to run example actin, microtubules,
 
 1. Create a virtual environment with conda-specific dependencies: `conda env create -f environment.yml`
 2. Activate the environment: `conda activate readdy_models`
+3. Install just command runner: `conda install -c conda-forge just`
 3. Install remaining dependencies: `just install`
 
 ## Development
