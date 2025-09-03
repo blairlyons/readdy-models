@@ -71,5 +71,5 @@ jobs:
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        user: aicspypi
+        user: blairlyons
         password: ${{ secrets.PYPI_TOKEN }}
