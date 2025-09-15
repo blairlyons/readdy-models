@@ -28,11 +28,10 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-  "numpy>=1.16",
-  "scipy>=1.5.2",
-  "pandas>=1.0",
-  "simulariumio",
-  "subcell_analysis @ git+https://github.com/simularium/subcell-analysis.git",
+  "numpy",
+  "scipy",
+  "pandas",
+  "simulariumio>=1.11.0",
 ]
 
 [project.urls]
@@ -75,7 +74,7 @@ example = [
   "psutil",
   "awscli",
   "boto3",
-  "openpyxl>=3.0",
+  "openpyxl",
 ]
 
 # entry points
@@ -143,6 +142,10 @@ ignore = [
   "Justfile",
   ".cookiecutter.yaml",
   "*docs/*",
+  "*.ipynb",
+  "*examples/**",
+  "*tests/**",
+  "environment.yml",
 ]
 
 [tool.mypy]

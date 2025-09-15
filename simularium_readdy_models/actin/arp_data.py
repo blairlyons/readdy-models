@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
+import math
 
 import numpy as np
-import math
 
 from ..common import ReaddyUtil
 from .actin_structure import ActinStructure
@@ -10,7 +10,7 @@ from .actin_structure import ActinStructure
 
 class ArpData:
     """
-    Arp branch nucleator data
+    Arp branch nucleator data.
     """
 
     arp_id = -1
@@ -37,7 +37,7 @@ class ArpData:
     ):
         """
         get the index of the closest actin monomer to the arp position
-        excluding the barbed end (because that monomer would also be bound to this arp)
+        excluding the barbed end (because that monomer would also be bound to this arp).
         """
         min_distance = math.inf
         closest_actin_index = -1
@@ -85,7 +85,7 @@ class ArpData:
     def get_bound_arp_rotation(self, mother_fiber, actin_arp2_pos):
         """
         get the difference in the arp's current orientation
-        compared to the initial orientation as a rotation matrix
+        compared to the initial orientation as a rotation matrix.
         """
         v_mother = mother_fiber.get_nearest_segment_direction(self.position)
         actin_arp2_axis_pos = mother_fiber.get_nearest_position(actin_arp2_pos)
@@ -99,7 +99,7 @@ class ArpData:
 
     def get_bound_monomer_position(self, actin_arp2_pos, mother_fiber, monomer_type):
         """
-        get the offset vector in the arp's local space for the nearby monomers
+        get the offset vector in the arp's local space for the nearby monomers.
         """
         offset_vector = (
             ActinStructure.branch_monomer_position(monomer_type)
@@ -111,7 +111,7 @@ class ArpData:
     def get_nucleated_arp_rotation(self, v_mother, v_daughter):
         """
         get the difference in the arp's current orientation
-        compared to the initial orientation as a rotation matrix
+        compared to the initial orientation as a rotation matrix.
         """
         branch_angle = ReaddyUtil.get_angle_between_vectors(v_mother, v_daughter)
         # rotate daughter axis to ideal branch angle
@@ -128,7 +128,7 @@ class ArpData:
 
     def get_local_nucleated_monomer_position(self, v_mother, v_daughter, monomer_type):
         """
-        get the offset vector in the arp's local space for the nearby monomers
+        get the offset vector in the arp's local space for the nearby monomers.
         """
         offset_vector = (
             ActinStructure.branch_monomer_position(monomer_type)
@@ -143,7 +143,7 @@ class ArpData:
     ):
         """
         rotate a monomer position near a branch to match the actual branch angle
-        (angles in radians)
+        (angles in radians).
         """
         angle = ActinStructure.branch_angle() - branch_angle
         pivot = (

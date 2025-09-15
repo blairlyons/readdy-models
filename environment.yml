@@ -1,0 +1,4 @@
+name: readdy_models
+dependencies:
+  - python=3.10
+  - conda-forge::readdy

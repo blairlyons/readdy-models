@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import numpy as np
 import readdy
@@ -11,7 +10,7 @@ from .microtubules_util import MicrotubulesUtil
 class MicrotubulesSimulation:
     def __init__(self, parameters, record=False, save_checkpoints=False, just_bonds=False):
         """
-        Creates a ReaDDy microtubules simulation
+        Creates a ReaDDy microtubules simulation.
 
         Ref: http://jcb.rupress.org/content/jcb/217/8/2691/F7.large.jpg
 
@@ -41,7 +40,7 @@ class MicrotubulesSimulation:
     def create_microtubules_system(self, just_bonds=False):
         """
         Create the ReaDDy system for microtubules
-        including particle types, constraints, and reactions
+        including particle types, constraints, and reactions.
         """
         self.system = readdy.ReactionDiffusionSystem(self.parameters["box_size"])
         self.parameters["temperature_K"] = self.parameters["temperature_C"] + 273.15
@@ -53,7 +52,7 @@ class MicrotubulesSimulation:
     def add_microtubules_types(self):
         """
         Add particle and topology types for microtubules particles
-        to the ReaDDy system
+        to the ReaDDy system.
         """
         tubulin_diffCoeff = ReaddyUtil.calculate_diffusionCoefficient(
             self.parameters["tubulin_radius"],
@@ -65,7 +64,7 @@ class MicrotubulesSimulation:
     def add_microtubules_constraints(self, just_bonds=False):
         """
         Add geometric constraints for connected microtubules particles,
-        including bonds, angles, and repulsions, to the ReaDDy system
+        including bonds, angles, and repulsions, to the ReaDDy system.
         """
         force_constant = self.parameters["force_constant"]
         util = ReaddyUtil()
@@ -131,7 +130,7 @@ class MicrotubulesSimulation:
 
     def add_microtubules_reactions(self):
         """
-        Add reactions to the ReaDDy system
+        Add reactions to the ReaDDy system.
         """
         self.microtubules_util.add_growth_reaction(
             self.system,
@@ -152,7 +151,7 @@ class MicrotubulesSimulation:
 
     def add_microtubule_seed(self):
         """
-        Add a microtubule seed
+        Add a microtubule seed.
         """
         self.microtubules_util.add_microtubule(
             int(self.parameters["seed_n_rings"]),
@@ -170,7 +169,7 @@ class MicrotubulesSimulation:
 
     def add_random_tubulin_dimers(self):
         """
-        Add randomly distributed tubulin dimers
+        Add randomly distributed tubulin dimers.
         """
         self.microtubules_util.add_tubulin_dimers(
             self.simulation,

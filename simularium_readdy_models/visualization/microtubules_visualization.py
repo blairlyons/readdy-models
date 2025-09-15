@@ -1,30 +1,30 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-import os
 import argparse
-import numpy as np
+import os
 
+import numpy as np
+from simulariumio import DISPLAY_TYPE, DisplayData, MetaData, ScatterPlotData, UnitData
 from simulariumio.readdy import ReaddyConverter, ReaddyData
-from simulariumio import MetaData, UnitData, DisplayData, ScatterPlotData, DISPLAY_TYPE
-from ..microtubules import (
-    MicrotubulesUtil,
-    MicrotubulesAnalyzer,
-    MICROTUBULES_REACTIONS,
-)
+
 from ..common import ReaddyUtil
+from ..microtubules import (
+    MICROTUBULES_REACTIONS,
+    MicrotubulesAnalyzer,
+    MicrotubulesUtil,
+)
 
 
 class MicrotubulesVisualization:
     """
-    visualize a microtubules trajectory in Simularium
+    visualize a microtubules trajectory in Simularium.
     """
 
     @staticmethod
     def get_display_data_for_all_polymer_types(raw_display_data):
         """
         creates a dictionary mapping particle type for all polymer types to a value
-        for a dictionary of types and values
+        for a dictionary of types and values.
 
         returns dictionary mapping all types to values
         """
@@ -38,7 +38,7 @@ class MicrotubulesVisualization:
     @staticmethod
     def get_protofilament_length_plot(monomer_data, times):
         """
-        Add a plot of protofilament lengths
+        Add a plot of protofilament lengths.
         """
         protofilament_list = MicrotubulesAnalyzer.analyze_protofilament_lengths(
             monomer_data
@@ -65,7 +65,7 @@ class MicrotubulesVisualization:
     @staticmethod
     def get_avg_microtubule_length_plot(monomer_data, times):
         """
-        Add a plot of average microtubule length
+        Add a plot of average microtubule length.
         """
         protofilament_list = MicrotubulesAnalyzer.analyze_protofilament_lengths(monomer_data)
 
@@ -88,7 +88,7 @@ class MicrotubulesVisualization:
     def get_growth_reactions_plot(reactions, times):
         """
         Add a plot of reaction events over time
-        for each total growth reaction
+        for each total growth reaction.
         """
         reaction_events = {}
         for total_rxn_name in MICROTUBULES_REACTIONS["Grow"]:
@@ -116,7 +116,7 @@ class MicrotubulesVisualization:
     def get_shrink_reactions_plot(reactions, times):
         """
         Add a plot of reaction events over time
-        for each total shrink reaction
+        for each total shrink reaction.
         """
         reaction_events = {}
 
@@ -139,7 +139,7 @@ class MicrotubulesVisualization:
     def get_attach_reactions_plot(reactions, times):
         """
         Add a plot of attachment events over time
-        for each total attach reaction
+        for each total attach reaction.
         """
         reaction_events = {}
         tmp = None
@@ -170,7 +170,7 @@ class MicrotubulesVisualization:
         times,
     ):
         """
-        Use an MicrotubulesAnalyzer to generate plots of observables
+        Use an MicrotubulesAnalyzer to generate plots of observables.
         """
         return {
             "scatter": [
@@ -189,7 +189,7 @@ class MicrotubulesVisualization:
     @staticmethod
     def visualize_microtubules(path_to_readdy_h5, box_size, scaled_time_step_us, plots):
         """
-        visualize a microtubule trajectory in Simularium
+        visualize a microtubule trajectory in Simularium.
         """
         # radii
         tubulin_radius = 2.0

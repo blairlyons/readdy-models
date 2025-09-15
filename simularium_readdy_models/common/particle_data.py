@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import numpy as np
 
 
 class ParticleData:
     """
-    Particle data for a monomer
+    Particle data for a monomer.
     """
 
     unique_id = ""
@@ -25,7 +24,7 @@ class ParticleData:
 
     def to_string(self):
         """
-        string representation
+        string representation.
         """
         return (
             f"ParticleData(id={self.unique_id}, type={self.type_name}, "

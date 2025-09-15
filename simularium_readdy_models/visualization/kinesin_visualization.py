@@ -1,25 +1,25 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
+import argparse
+import os
 
 import numpy as np
-import os
-import argparse
-
-from simulariumio.readdy import ReaddyConverter, ReaddyData
 from simulariumio import MetaData, UnitData
+from simulariumio.readdy import ReaddyConverter, ReaddyData
+
 from ..microtubules import MicrotubulesUtil
 
 
 class KinesinVisualization:
     """
-    visualize a kinesin trajectory in Simularium
+    visualize a kinesin trajectory in Simularium.
     """
 
     @staticmethod
     def get_mapping_for_all_polymer_types(types_mapping):
         """
         creates a dictionary mapping particle type for all polymer types to a value
-        for a dictionary of types and values
+        for a dictionary of types and values.
 
         returns dictionary mapping all types to values
         """
@@ -33,7 +33,7 @@ class KinesinVisualization:
     @staticmethod
     def visualize_kinesin(path_to_readdy_h5, box_size, plots):
         """
-        visualize a kinesin trajectory in Simularium
+        visualize a kinesin trajectory in Simularium.
         """
         # radii
         tubulin_radius = 2.0

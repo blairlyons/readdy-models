@@ -27,14 +27,14 @@ Ready to contribute? Here's how to set up `simularium_readdy_models` for local d
     Windows: `scoop install just` or `choco install just`
     MacOS: `brew install just`
 
-4. Install the project in editable mode. (It is also recommended to work in a virtualenv or anaconda environment):
+4. Install the project in editable mode in an anaconda environment:
 
     ```bash
-    cd simularium_readdy_models/
+    cd readdy-models/
+    conda env create -f environment.yml
+    conda activate readdy_models
     just install
     ```
-
-    If this doesn't work try: `pip install -e '.[lint,test,docs,dev]'`.
 
 5. Create a branch for local development:
 

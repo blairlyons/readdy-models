@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Top-level package for Simularium Models Util."""
 
 __author__ = "Blair Lyons"
@@ -13,5 +11,7 @@ def get_module_version():
     return __version__
 
 
-from .common import ReaddyUtil  # noqa: F401
-from .common import RepeatedTimer  # noqa: F401
+from .common import (
+    ReaddyUtil,  # noqa: F401
+    RepeatedTimer,  # noqa: F401
+)

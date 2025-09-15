@@ -1,5 +1,7 @@
 FROM continuumio/miniconda3
 
+RUN apt-get update && apt-get install -y python3-dev gcc build-essential
+
 RUN mkdir working
 
 COPY env.yml .

@@ -1,13 +1,18 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 
-import readdy
 import numpy as np
+import readdy
 
-from ..common import ReaddyUtil
-from .actin_util import ActinUtil
+from ..common import (
+    ReaddyUtil,
+    add_membrane_particle_types,
+    add_membrane_constraints,
+    get_membrane_monomers,
+    all_membrane_particle_types,
+)
 from .actin_structure import ActinStructure
+from .actin_util import ActinUtil
 
 
 class ActinSimulation:
@@ -16,9 +21,10 @@ class ActinSimulation:
         parameters,
         record=False,
         save_checkpoints=False,
+        readdy_system=None,
     ):
         """
-        Creates a ReaDDy branched actin simulation
+        Creates a ReaDDy branched actin simulation.
 
         Ref: http://jcb.rupress.org/content/jcb/180/5/887.full.pdf
 
@@ -44,7 +50,7 @@ class ActinSimulation:
         self.actin_util = ActinUtil(
             self.parameters, self.get_pointed_end_displacements()
         )
-        self.create_actin_system()
+        self.create_actin_system(readdy_system)
         self.simulation = ReaddyUtil.create_readdy_simulation(
             self.system,
             self._parameter("n_cpu"),
@@ -75,27 +81,32 @@ class ActinSimulation:
             return ActinUtil.DEFAULT_PARAMETERS[parameter_name]
         raise Exception(f"Parameter {parameter_name} is required but was not provided.")
 
-    def create_actin_system(self):
+    def create_actin_system(self, readdy_system):
         """
         Create the ReaDDy system for actin
-        including particle types, constraints, and reactions
+        including particle types, constraints, and reactions.
         """
-        self.system = readdy.ReactionDiffusionSystem(
-            box_size=self._parameter("box_size"),
-            periodic_boundary_conditions=[bool(self._parameter("periodic_boundary"))]
-            * 3,
-        )
         self.parameters["temperature_K"] = self._parameter("temperature_C") + 273.15
-        self.system.temperature = self.parameters["temperature_K"]
-        self.add_particle_types()
-        ActinUtil.check_add_global_box_potential(self.system)
-        self.add_constraints()
-        self.add_reactions()
+        if readdy_system is None:
+            self.system = readdy.ReactionDiffusionSystem(
+                box_size=self._parameter("box_size"),
+                periodic_boundary_conditions=[
+                    bool(self._parameter("periodic_boundary"))
+                ]
+                * 3,
+            )
+            self.system.temperature = self.parameters["temperature_K"]
+            self.add_particle_types()
+            ActinUtil.check_add_global_box_potential(self.system)
+            self.add_constraints()
+            self.add_reactions()
+        else:
+            self.system = readdy_system
 
     def add_particle_types(self):
         """
         Add particle and topology types for actin particles
-        to the ReaDDy system
+        to the ReaDDy system.
         """
         temperature = self._parameter("temperature_K")
         viscosity = self._parameter("viscosity")
@@ -111,46 +122,45 @@ class ActinSimulation:
         self.actin_util.add_actin_types(self.system, actin_diffCoeff)
         self.actin_util.add_arp23_types(self.system, arp23_diffCoeff)
         self.actin_util.add_cap_types(self.system, cap_diffCoeff)
-        self.system.add_species("obstacle", 0.0)
+        self.system.topologies.add_type("Obstacle")
+        self.system.add_topology_species(
+            "obstacle", self._parameter("obstacle_diff_coeff")
+        )
+        if self._parameter("add_membrane"):
+            add_membrane_particle_types(
+                self.system,
+                self._parameter("membrane_particle_radius"),
+                temperature,
+                viscosity,
+            )
+        if self._parameter("barbed_binding_site"):
+            self.actin_util.add_binding_site_types(self.system, actin_diffCoeff)
 
     def add_constraints(self):
         """
         Add geometric constraints for connected actin particles,
-        including bonds, angles, and repulsions, to the ReaDDy system
+        including bonds, angles, and repulsions, to the ReaDDy system.
         """
         util = ReaddyUtil()
-        accurate_force_constants = self._parameter("accurate_force_constants")
         longitudinal_bonds = bool(self._parameter("longitudinal_bonds"))
         only_linear_actin = bool(self._parameter("only_linear_actin_constraints"))
-        actin_actin_angle_potentials = bool(
-            self._parameter("actin_actin_angle_potentials")
-        )
-        actin_actin_dihedral_potentials = bool(
-            self._parameter("actin_actin_dihedral_potentials")
-        )
+        actin_constraints = bool(self._parameter("actin_constraints"))
         # force constants
-        angle_force_constant = 2.0 * ActinUtil.DEFAULT_FORCE_CONSTANT
-        actin_angle_force_constant = angle_force_constant
-        dihedral_force_constant = ActinUtil.DEFAULT_FORCE_CONSTANT
-        actin_dihedral_force_constant = (
-            2.0 if longitudinal_bonds else 5.0
-        ) * dihedral_force_constant
-        if accurate_force_constants:
-            actin_angle_force_constant = float(
-                self._parameter("angles_force_multiplier")
-            )
-            actin_dihedral_force_constant = float(
-                self._parameter("dihedrals_force_multiplier")
-            )
+        actin_angle_force_constant = float(self._parameter("angles_force_constant"))
+        actin_dihedral_force_constant = float(
+            self._parameter("dihedrals_force_constant")
+        )
         # linear actin
         self.actin_util.add_bonds_between_actins(
-            accurate_force_constants, self.system, util, longitudinal_bonds
+            self.system,
+            util,
+            longitudinal_bonds,
+            float(self._parameter("bonds_force_multiplier")),
         )
-        if actin_actin_angle_potentials:
+        if actin_constraints:
             self.actin_util.add_filament_twist_angles(
                 actin_angle_force_constant, self.system, util, longitudinal_bonds
             )
-        if actin_actin_dihedral_potentials:
             self.actin_util.add_filament_twist_dihedrals(
                 actin_dihedral_force_constant,
                 self.system,
@@ -161,15 +171,19 @@ class ActinSimulation:
         if not only_linear_actin:
             # branch junction
             self.actin_util.add_branch_bonds(self.system, util)
-            self.actin_util.add_branch_angles(angle_force_constant, self.system, util)
+            self.actin_util.add_branch_angles(
+                2.0 * ActinUtil.DEFAULT_FORCE_CONSTANT, self.system, util
+            )
             self.actin_util.add_branch_dihedrals(
-                dihedral_force_constant, self.system, util
+                ActinUtil.DEFAULT_FORCE_CONSTANT, self.system, util
             )
             # capping protein
             self.actin_util.add_cap_bonds(self.system, util)
-            self.actin_util.add_cap_angles(angle_force_constant, self.system, util)
+            self.actin_util.add_cap_angles(
+                2.0 * ActinUtil.DEFAULT_FORCE_CONSTANT, self.system, util
+            )
             self.actin_util.add_cap_dihedrals(
-                dihedral_force_constant, self.system, util
+                ActinUtil.DEFAULT_FORCE_CONSTANT, self.system, util
             )
         # repulsions
         self.actin_util.add_repulsions(
@@ -179,15 +193,52 @@ class ActinSimulation:
             ActinUtil.DEFAULT_FORCE_CONSTANT,
             self.system,
             util,
-            bool(self._parameter("actin_actin_repulsion_potentials")),
-            longitudinal_bonds,
+            actin_actin_repulsion_potentials=True,
+            longitudinal_bonds=longitudinal_bonds,
+        )
+        self.actin_util.add_repulsions_with_actin(
+            ["obstacle"],
+            self._parameter("obstacle_radius"),
+            ActinUtil.DEFAULT_FORCE_CONSTANT,
+            self.system,
+            util,
         )
         # box potentials
         self.actin_util.add_monomer_box_potentials(self.system)
+        self.actin_util.add_obstacle_box_potential(self.system)
+        self.actin_util.add_extra_box(self.system)
+        # membrane
+        if self._parameter("add_membrane"):
+            add_membrane_constraints(
+                self.system,
+                np.array(
+                    [
+                        float(self._parameter("membrane_center_x")),
+                        float(self._parameter("membrane_center_y")),
+                        float(self._parameter("membrane_center_z")),
+                    ]
+                ),
+                np.array(
+                    [
+                        float(self._parameter("membrane_size_x")),
+                        float(self._parameter("membrane_size_y")),
+                        float(self._parameter("membrane_size_z")),
+                    ]
+                ),
+                self._parameter("membrane_particle_radius"),
+                self._parameter("box_size"),
+            )
+            self.actin_util.add_repulsions_with_actin(
+                all_membrane_particle_types(),
+                self._parameter("membrane_particle_radius"),
+                ActinUtil.DEFAULT_FORCE_CONSTANT,
+                self.system,
+                util,
+            )
 
     def add_reactions(self):
         """
-        Add reactions to the ReaDDy system
+        Add reactions to the ReaDDy system.
         """
         if bool(self._parameter("reactions")):
             self.actin_util.add_dimerize_reaction(self.system)
@@ -210,6 +261,8 @@ class ActinSimulation:
             self.actin_util.add_cap_unbind_reaction(self.system)
         if self.do_pointed_end_translation():
             self.actin_util.add_translate_reaction(self.system)
+        if self._parameter("position_obstacle_stride") > 0:
+            self.actin_util.add_position_obstacle_reaction(self.system)
 
     def do_pointed_end_translation(self):
         result = self._parameter("displace_pointed_end_tangent") or self._parameter(
@@ -227,7 +280,7 @@ class ActinSimulation:
 
     def get_pointed_end_displacements(self):
         """
-        Get parameters for translation of the pointed end of an orthogonal seed
+        Get parameters for translation of the pointed end of an orthogonal seed.
         """
         if not self.do_pointed_end_translation():
             return {}
@@ -267,7 +320,7 @@ class ActinSimulation:
     def add_random_monomers(self):
         """
         Add randomly distributed actin monomers, Arp2/3 dimers,
-        and capping protein according to concentrations and box size
+        and capping protein according to concentrations and box size.
         """
         box_size = self._parameter("box_size")
         self.actin_util.add_actin_monomers(
@@ -291,7 +344,7 @@ class ActinSimulation:
 
     def add_random_linear_fibers(self, use_uuids=True, longitudinal_bonds=True):
         """
-        Add randomly distributed and oriented linear fibers
+        Add randomly distributed and oriented linear fibers.
         """
         seed_n_fibers = int(self._parameter("seed_n_fibers"))
         if seed_n_fibers < 1:
@@ -306,7 +359,7 @@ class ActinSimulation:
 
     def add_fibers_from_data(self, fibers_data, use_uuids=True):
         """
-        Add fibers specified in a list of FiberData
+        Add fibers specified in a list of FiberData.
 
         fiber_data: List[FiberData]
         (FiberData for mother fibers only, which should have
@@ -314,51 +367,61 @@ class ActinSimulation:
         """
         self.actin_util.add_fibers_from_data(self.simulation, fibers_data, use_uuids)
 
-    def add_monomers_from_data(self, monomer_data):
-        """
-        Add fibers and monomers specified in the monomer_data, in the form:
-        monomer_data = {
-            "topologies": {
-                [topology ID] : {
-                    "type_name": "[topology type]",
-                    "particle_ids": [],
-                },
-            },
-            "particles": {
-                [particle ID] : {
-                    "type_name": "[particle type]",
-                    "position": np.zeros(3),
-                    "neighbor_ids": [],
-                },
-            },
-        }
-        * IDs are ints
-        """
-        self.topologies = self.actin_util.add_monomers_from_data(
-            self.simulation, monomer_data
-        )
-
     def add_obstacles(self):
         """
-        Add obstacle particles
+        Add obstacle particles.
         """
+        if not self._parameter("add_obstacles"):
+            return
         n = 0
         while f"obstacle{n}_position_x" in self.parameters:
-            self.simulation.add_particle(
-                type="obstacle",
-                position=[
-                    float(self._parameter(f"obstacle{n}_position_x")),
-                    float(self._parameter(f"obstacle{n}_position_y")),
-                    float(self._parameter(f"obstacle{n}_position_z")),
-                ],
+            self.simulation.add_topology(
+                "Obstacle",
+                ["obstacle"],
+                np.array(
+                    [
+                        [
+                            float(self._parameter(f"obstacle{n}_position_x")),
+                            float(self._parameter(f"obstacle{n}_position_y")),
+                            float(self._parameter(f"obstacle{n}_position_z")),
+                        ]
+                    ]
+                ),
             )
             n += 1
         if n > 0:
             print(f"Added {n} obstacle(s).")
 
+    def add_membrane(self):
+        """
+        Add membrane types and particles.
+        """
+        if not self._parameter("add_membrane"):
+            return
+        ReaddyUtil.add_monomers_from_data(
+            self.simulation,
+            get_membrane_monomers(
+                np.array(
+                    [
+                        float(self._parameter("membrane_center_x")),
+                        float(self._parameter("membrane_center_y")),
+                        float(self._parameter("membrane_center_z")),
+                    ]
+                ),
+                np.array(
+                    [
+                        float(self._parameter("membrane_size_x")),
+                        float(self._parameter("membrane_size_y")),
+                        float(self._parameter("membrane_size_z")),
+                    ]
+                ),
+                self._parameter("membrane_particle_radius"),
+            ),
+        )
+
     def add_crystal_structure_monomers(self):
         """
-        Add monomers exactly from the branched actin crystal structure
+        Add monomers exactly from the branched actin crystal structure.
         """
         type_names = [
             "actin#pointed_ATP_1",
@@ -411,11 +474,11 @@ class ActinSimulation:
                 "position": np.array(positions[index]),
                 "neighbor_ids": neighbor_ids[index],
             }
-        self.add_monomers_from_data(monomer_data)
+        ReaddyUtil.add_monomers_from_data(self.simulation, monomer_data)
 
     def simulate(self, d_time):
         """
-        Simulate in ReaDDy for the given d_time seconds
+        Simulate in ReaDDy for the given d_time seconds.
         """
 
         def loop():
@@ -454,6 +517,6 @@ class ActinSimulation:
         During a running simulation,
         get data for topologies of particles
         from readdy.simulation.current_topologies
-        as monomers
+        as monomers.
         """
         return ReaddyUtil.get_current_monomers(self.simulation.current_topologies)

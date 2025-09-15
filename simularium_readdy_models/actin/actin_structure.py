@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import numpy as np
 
@@ -23,7 +22,7 @@ class ActinStructure:
         [h,i,j] = daughter actin, [k, l, m, n, o, p, q, r] = mother actin
       - find these values in the output from the measure commands
         (spatial values are multiplied by 0.1 from Angstroms to nm,
-        angle values are in degrees)
+        angle values are in degrees).
     """
 
     arp3_position = np.array([29.275, 27.535, 23.944])
@@ -95,7 +94,7 @@ class ActinStructure:
     @staticmethod
     def branch_positions():
         """
-        get the points on the mother and daughter axes that are closest to each other
+        get the points on the mother and daughter axes that are closest to each other.
         """
         # find unit direction vector for line perpendicular to mother and daughter axes
         perpendicular = np.cross(
@@ -131,7 +130,7 @@ class ActinStructure:
     @staticmethod
     def branch_monomer_position(monomer_type):
         """
-        get the given monomer position
+        get the given monomer position.
         """
         if monomer_type == "actin_arp2":
             return ActinStructure.mother_positions[3]

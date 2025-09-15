@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import uuid
 
 import numpy as np
 
-from ..common import ReaddyUtil, ParticleData
+from ..common import ParticleData, ReaddyUtil
 from .actin_structure import ActinStructure, FiberData
 
 next_monomer_id = 0
@@ -14,7 +13,7 @@ next_fiber_id = -1
 
 class ActinGenerator:
     """
-    Generates positions, types, and edges for monomers in actin networks
+    Generates positions, types, and edges for monomers in actin networks.
     """
 
     @staticmethod
@@ -35,7 +34,7 @@ class ActinGenerator:
     @staticmethod
     def _get_max_fiber_id(fibers_data):
         """
-        get the largest fiber id
+        get the largest fiber id.
         """
         max_id = 0
         for fiber in fibers_data:
@@ -68,7 +67,7 @@ class ActinGenerator:
     def _get_actin_number(actin_number, offset, longitudinal_bonds=True):
         """
         get the type number for an actin plus the given offset in range [-1, 1]
-        (i.e. return 1 for type = "actin#ATP_2" and offset = -1)
+        (i.e. return 1 for type = "actin#ATP_2" and offset = -1).
         """
         assert offset >= -1 or offset <= 1, "Offset for actin number is not in [-1, 1]"
         n = actin_number + offset
@@ -84,7 +83,7 @@ class ActinGenerator:
         particle_id, direction, particles, longitudinal_bonds=True
     ):
         """
-        get the id for an actin's actin neighbor in the given direction
+        get the id for an actin's actin neighbor in the given direction.
         """
         if particle_id is None:
             return None
@@ -109,7 +108,7 @@ class ActinGenerator:
     def _set_particle_type_name(type_prefix, particle_id, particles):
         """
         set the type name of the particle using it's same actin number
-        with the new type_prefix
+        with the new type_prefix.
         """
         if particle_id is None:
             return particles
@@ -121,7 +120,7 @@ class ActinGenerator:
     def _remove_mid_from_actin(particle_id, particles):
         """
         remove the "mid" flag in the actin type_name
-        for the monomer with particle_id
+        for the monomer with particle_id.
         """
         if particle_id is None:
             return particles
@@ -141,7 +140,7 @@ class ActinGenerator:
         remove "mid" flags from actins near a branch junction,
         including the actin bound to arp2, the actin bound to arp3,
         as well as one actin before and two actins after the arps
-        on the mother filament
+        on the mother filament.
         """
         actin_mother0_id = ActinGenerator._get_neighbor_actin_id(
             actin_arp_ids[0], -1, particles, longitudinal_bonds
@@ -163,7 +162,7 @@ class ActinGenerator:
     def _check_shift_branch_actin_numbers(particles, particle_ids):
         """
         if the first actin's number is not 2,
-        shift the branch's actin numbers so that it is
+        shift the branch's actin numbers so that it is.
         """
         first_actin_type = particles[particle_ids[0]].type_name
         if "2" not in first_actin_type:
@@ -195,7 +194,7 @@ class ActinGenerator:
         longitudinal_bonds=True,
     ):
         """
-        get actin monomer data pointed to barbed for a fiber with no daughter branches
+        get actin monomer data pointed to barbed for a fiber with no daughter branches.
         """
         normal = np.copy(start_normal)
         axis_pos = fiber.get_nearest_position(np.copy(start_axis_pos))
@@ -254,7 +253,7 @@ class ActinGenerator:
         particle_ids, fiber, actin_arp_ids, particles={}, longitudinal_bonds=True
     ):
         """
-        add positions, types, and edges for a bound arp2 and arp3
+        add positions, types, and edges for a bound arp2 and arp3.
         """
         for a in range(len(fiber.bound_arps)):
             arp = fiber.bound_arps[a]
@@ -298,7 +297,7 @@ class ActinGenerator:
     @staticmethod
     def _get_nucleated_arp_monomer_positions(mother_fiber, nucleated_arp):
         """
-        get actin positions pointed to barbed for a branch
+        get actin positions pointed to barbed for a branch.
         """
         # get ideal monomer positions near the arp
         monomer_positions = []
@@ -353,7 +352,7 @@ class ActinGenerator:
         longitudinal_bonds=True,
     ):
         """
-        get any bound arps and any daughter fibers attached to this fiber
+        get any bound arps and any daughter fibers attached to this fiber.
         """
         (
             fork_positions,
@@ -410,7 +409,7 @@ class ActinGenerator:
         longitudinal_bonds=True,
     ):
         """
-        attach daughter fiber monomers to their mother fiber monomers
+        attach daughter fiber monomers to their mother fiber monomers.
         """
         # choose mother actins to attach to arps if not already determined
         if these_actin_arp_ids is not None:
@@ -450,9 +449,10 @@ class ActinGenerator:
         pointed_actin_number,
         particles={},
         longitudinal_bonds=True,
+        barbed_binding_site=False,
     ):
         """
-        get the main actins for a fiber (i.e. no branches or arps)
+        get the main actins for a fiber (i.e. no branches or arps).
         """
         actin_number = pointed_actin_number
         if not fiber.is_daughter and len(fiber.nucleated_arps) > 0:
@@ -528,11 +528,7 @@ class ActinGenerator:
             particle_ids = pointed_particle_ids + [actin_arp2_id] + barbed_particle_ids
             actin_arp_ids = [actin_arp2_id, actin_arp3_id]
         else:
-            (
-                particles,
-                particle_ids,
-                _,
-            ) = ActinGenerator._get_actins_for_linear_fiber(
+            (particles, particle_ids, _,) = ActinGenerator._get_actins_for_linear_fiber(
                 fiber,
                 start_normal,
                 start_axis_pos,
@@ -554,8 +550,14 @@ class ActinGenerator:
                     # remove "mid" from second actin
                     ActinGenerator._remove_mid_from_actin(particle_ids[1], particles)
             actin_arp_ids = None
+        if barbed_binding_site and len(particle_ids) > 1:
+            particles = ActinGenerator._set_particle_type_name(
+                "actin#barbed_ATP_",
+                particle_ids[len(particle_ids) - 2],
+                particles,
+            )
         particles = ActinGenerator._set_particle_type_name(
-            "actin#barbed_ATP_",
+            "actin#barbed_ATP_" if not barbed_binding_site else "binding_site#",
             particle_ids[len(particle_ids) - 1],
             particles,
         )
@@ -570,9 +572,10 @@ class ActinGenerator:
         pointed_actin_number,
         particles={},
         longitudinal_bonds=True,
+        barbed_binding_site=False,
     ):
         """
-        get the main actins for a fiber as well as any bound arps and daughter fibers
+        get the main actins for a fiber as well as any bound arps and daughter fibers.
         """
         (
             particles,
@@ -586,6 +589,7 @@ class ActinGenerator:
             pointed_actin_number,
             particles,
             longitudinal_bonds,
+            barbed_binding_site,
         )
         daughter_particle_ids = []
         all_actin_arp_ids = []
@@ -628,7 +632,7 @@ class ActinGenerator:
         """
         get the min and max extents
         within the coordinates defined by a parent box
-        of a child box defined by center and size
+        of a child box defined by center and size.
         """
         return (
             child_box_center - child_box_size / 2.0,
@@ -638,7 +642,7 @@ class ActinGenerator:
     @staticmethod
     def _position_is_in_bounds(position, min_extent, max_extent):
         """
-        check if a position is within the given extents
+        check if a position is within the given extents.
         """
         for dim in range(3):
             if position[dim] < min_extent[dim] or position[dim] > max_extent[dim]:
@@ -652,7 +656,7 @@ class ActinGenerator:
         """
         get a point (which is also the normal) of the extent plane intersected
         by the line segment between the given points,
-        assume bounds are a rectangular prism orthogonal to cartesian grid
+        assume bounds are a rectangular prism orthogonal to cartesian grid.
         """
         result = np.zeros(3)
         for dim in range(3):
@@ -686,7 +690,7 @@ class ActinGenerator:
         """
         get the point where the line segment between the given positions
         intersects the bounds volume, assume bounds are
-        a rectangular prism orthogonal to cartesian grid
+        a rectangular prism orthogonal to cartesian grid.
         """
         plane = ActinGenerator._get_point_on_plane_of_intersecting_extent(
             point1, point2, min_extent, max_extent, direction
@@ -705,7 +709,7 @@ class ActinGenerator:
     @staticmethod
     def _create_fiber(current_chunk, source_fiber, found_chunk):
         """
-        create a FiberData for a cropped chunk of a source fiber
+        create a FiberData for a cropped chunk of a source fiber.
         """
         if not found_chunk:
             fiber_id = source_fiber.fiber_id
@@ -719,7 +723,7 @@ class ActinGenerator:
         """
         crop the fiber data to a cube volume
         defined by min_extent and max_extent
-        and apply the position_offset
+        and apply the position_offset.
 
         fibers_data: List[FiberData]
         (FiberData for mother fibers only, which should have
@@ -805,9 +809,11 @@ class ActinGenerator:
         use_uuids=True,
         start_normal=None,
         longitudinal_bonds=True,
+        barbed_binding_site=False,
+        top_id=0,
     ):
         """
-        get all the monomer data for the (branched) fibers in fibers_data
+        get all the monomer data for the (branched) fibers in fibers_data.
 
         fibers_data: List[FiberData]
         (FiberData for mother fibers only, which should have
@@ -841,8 +847,9 @@ class ActinGenerator:
                 np.zeros(3),
                 1,
                 longitudinal_bonds=longitudinal_bonds,
+                barbed_binding_site=barbed_binding_site,
             )
-            result["topologies"][ActinGenerator._get_next_monomer_id()] = {
+            result["topologies"][top_id] = {
                 "type_name": "Actin-Polymer",
                 "particle_ids": particle_ids,
             }
@@ -853,21 +860,23 @@ class ActinGenerator:
         return result
 
     @staticmethod
-    def setup_fixed_monomers(monomers, parameters):
+    def setup_fixed_monomers(
+        monomers, orthogonal_seed, n_fixed_monomers_pointed, n_fixed_monomers_barbed
+    ):
         """
-        Fix monomers at either end of the orthogonal actin seed
+        Fix monomers at either end of the orthogonal actin seed.
         """
-        if not parameters["orthogonal_seed"]:
+        if not orthogonal_seed:
             return monomers
         top_id = list(monomers["topologies"].keys())[0]
         n_monomers = len(monomers["topologies"][top_id]["particle_ids"])
-        for monomer_index in range(int(parameters["n_fixed_monomers_pointed"])):
+        for monomer_index in range(n_fixed_monomers_pointed):
             type_name = monomers["particles"][monomer_index]["type_name"]
             type_name = ReaddyUtil.particle_type_with_flags(
                 type_name, ["fixed"], [], reverse_sort=True
             )
             monomers["particles"][monomer_index]["type_name"] = type_name
-        for i in range(int(parameters["n_fixed_monomers_barbed"])):
+        for i in range(n_fixed_monomers_barbed):
             monomer_index = n_monomers - 1 - i
             type_name = monomers["particles"][monomer_index]["type_name"]
             type_name = ReaddyUtil.particle_type_with_flags(
@@ -875,6 +884,35 @@ class ActinGenerator:
             )
             monomers["particles"][monomer_index]["type_name"] = type_name
         return monomers
+
+    @staticmethod
+    def get_free_actin_monomers(
+        concentration, box_center, box_size, start_particle_id, start_top_id
+    ):
+        result = {
+            "topologies": {},
+            "particles": {},
+        }
+        n_particles = ReaddyUtil.calculate_nParticles(concentration, box_size)
+        positions = (
+            box_center + (np.random.uniform(size=(n_particles, 3)) - 0.5) * box_size
+        )
+        p_id = start_particle_id
+        top_id = start_top_id
+        for p in range(len(positions)):
+            result["topologies"][top_id] = {
+                "type_name": "Actin-Monomer-ATP",
+                "particle_ids": [p_id],
+            }
+            result["particles"][p_id] = {
+                "unique_id": p_id,
+                "type_name": "actin#free_ATP",
+                "position": positions[p],
+                "neighbor_ids": [],
+            }
+            p_id += 1
+            top_id += 1
+        return result
 
     @staticmethod
     def particles_to_string(particle_ids, particles, info=""):

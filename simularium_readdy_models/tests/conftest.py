@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import numpy as np
 
@@ -74,7 +73,7 @@ def check_readdy_state(simulation, expected_monomers, ignore_extra_spatial_rxn=F
 
 def assert_monomers_equal(test_monomers, expected_monomers, ignore_extra_spatial_rxn=False, test_position=False):
     """
-    Assert two topologies (in monomer form) are equivalent
+    Assert two topologies (in monomer form) are equivalent.
     """
     # check topology has the correct type_name
     # and contains the correct particle_ids (in any order, starting at any index)
@@ -122,7 +121,7 @@ def assert_monomers_equal(test_monomers, expected_monomers, ignore_extra_spatial
 
 def assert_fibers_equal(topology_fibers1, topology_fibers2, test_position=False):
     """
-    Assert two topologies (in fiber form) are equivalent
+    Assert two topologies (in fiber form) are equivalent.
     """
     # check topology has the correct type_name
     # and contains the correct points (in order)

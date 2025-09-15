@@ -1,14 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
+import copy
+import math
+import random
 
 import numpy as np
 import readdy
-import math
-import random
-import copy
 
 from ..common import ReaddyUtil
-
 
 parameters = {}
 
@@ -22,7 +21,7 @@ def set_parameters(p):
 class MicrotubulesUtil:
     def __init__(self, parameters):
         """
-        Utility functions for ReaDDy microtubules models
+        Utility functions for ReaDDy microtubules models.
 
         Parameters need to be accessible in ReaDDy callbacks
         which can't be instance methods, so parameters are global
@@ -35,7 +34,7 @@ class MicrotubulesUtil:
     ):
         """
         get a random pair of neighbor tubulins of the given types,
-        GTP state, and polymer offsets
+        GTP state, and polymer offsets.
         """
         vertices = []
         for v in topology.graph.get_vertices():
@@ -70,7 +69,7 @@ class MicrotubulesUtil:
     @staticmethod
     def get_neighboring_tubulin(topology, vertex, polymer_offsets):
         """
-        get the next tubulin neighbor in the branch from site named direction
+        get the next tubulin neighbor in the branch from site named direction.
         """
         return ReaddyUtil.get_neighbor_of_type(
             topology,
@@ -89,7 +88,7 @@ class MicrotubulesUtil:
     @staticmethod
     def tubulin_has_sites(topology, tubulin):
         """
-        does the tubulin have sites attached?
+        does the tubulin have sites attached?.
         """
         return (
             ReaddyUtil.get_neighbor_of_type(topology, tubulin, "site#out", False)
@@ -99,7 +98,7 @@ class MicrotubulesUtil:
     @staticmethod
     def get_tubulin_sites(topology, tubulin):
         """
-        get the site particles attached to this tubulin vertex
+        get the site particles attached to this tubulin vertex.
         """
         if not MicrotubulesUtil.tubulin_has_sites(topology, tubulin):
             return None
@@ -114,14 +113,14 @@ class MicrotubulesUtil:
     @staticmethod
     def polymer_indices_to_string(polymer_indices):
         """
-        get the x and y polymer index for a particle
+        get the x and y polymer index for a particle.
         """
         return f"_{polymer_indices[0]}_{polymer_indices[1]}"
 
     @staticmethod
     def increment_polymer_indices(polymer_indices, polymer_offsets):
         """
-        increment the x and y polymer index for a particle
+        increment the x and y polymer index for a particle.
         """
         polymer_offsets = ReaddyUtil.clamp_polymer_offsets_2D(
             polymer_indices[0], polymer_offsets
@@ -133,7 +132,7 @@ class MicrotubulesUtil:
     @staticmethod
     def get_polymer_indices(particle_type):
         """
-        get the x and y polymer index for a particle
+        get the x and y polymer index for a particle.
         """
         if "tubulin" not in particle_type:
             return []
@@ -148,7 +147,7 @@ class MicrotubulesUtil:
     @staticmethod
     def get_polymer_offsets(particle_types):
         """
-        get the offsets between two particle's polymer indices
+        get the offsets between two particle's polymer indices.
         """
         polymer_indices = [
             MicrotubulesUtil.get_polymer_indices(particle_types[0]),
@@ -166,7 +165,7 @@ class MicrotubulesUtil:
     def get_filament_lengths(topology, tubulin_minus, tubulin_plus):
         """
         get the lengths of the filaments, cut off the larger one
-        at one larger than the smaller
+        at one larger than the smaller.
         """
         next_tub_minus = MicrotubulesUtil.get_neighboring_tubulin(
             topology, tubulin_minus, [-1, 0]
@@ -190,7 +189,7 @@ class MicrotubulesUtil:
         """
         does the fragment starting at the given tubulin
         and going the given direction (-1 or 1) along a filament
-        have any crosslinks to other filaments?
+        have any crosslinks to other filaments?.
         """
         for i in range(2):
             neighbor_tub = MicrotubulesUtil.get_neighboring_tubulin(
@@ -208,7 +207,7 @@ class MicrotubulesUtil:
     @staticmethod
     def remove_bent_filament_site_bonds(topology, recipe, tubulin_minus, tubulin_plus):
         """
-        remove bonds between the sites of tubulin1 and tubulin2
+        remove bonds between the sites of tubulin1 and tubulin2.
         """
         v_sites_minus = MicrotubulesUtil.get_tubulin_sites(topology, tubulin_minus)
         if v_sites_minus is None:
@@ -248,7 +247,7 @@ class MicrotubulesUtil:
     @staticmethod
     def remove_tubulin_sites(topology, recipe, tubulin):
         """
-        emit a tubulin's site particles
+        emit a tubulin's site particles.
         """
         v_sites = MicrotubulesUtil.get_tubulin_sites(topology, tubulin)
         if v_sites is None:
@@ -267,7 +266,7 @@ class MicrotubulesUtil:
     @staticmethod
     def set_free(topology, recipe, tubulins):
         """
-        emit each tubulin's site particles and change its type to tubulin#free
+        emit each tubulin's site particles and change its type to tubulin#free.
         """
         for tubulin in tubulins:
             if not MicrotubulesUtil.remove_tubulin_sites(topology, recipe, tubulin):
@@ -280,7 +279,7 @@ class MicrotubulesUtil:
     def topology_is_microtubule(topology):
         """
         does the topology have tubulins with ring bonds?
-        if so it has multiple protofilaments and is not just an oligomer
+        if so it has multiple protofilaments and is not just an oligomer.
         """
         for vertex in topology.graph.get_vertices():
             pt = topology.particle_type_of_vertex(vertex)
@@ -300,7 +299,7 @@ class MicrotubulesUtil:
     @staticmethod
     def get_attaching_sites(topology):
         """
-        get the ring sites that just attached in a spatial reaction
+        get the ring sites that just attached in a spatial reaction.
         """
         sites1 = ReaddyUtil.get_vertices_of_type(topology, "site#1", True)
         for site1 in sites1:
@@ -312,7 +311,7 @@ class MicrotubulesUtil:
     @staticmethod
     def cancel_attach(topology, recipe, sites):
         """
-        reverse an attach spatial reaction
+        reverse an attach spatial reaction.
         """
         removed, message = ReaddyUtil.try_remove_edge(
             topology, recipe, sites[0], sites[1]
@@ -324,7 +323,7 @@ class MicrotubulesUtil:
     @staticmethod
     def tubulins_can_attach(tubulin_types):
         """
-        check if tubulins can attach laterally
+        check if tubulins can attach laterally.
         """
         offsets = MicrotubulesUtil.get_polymer_offsets(tubulin_types)
         return offsets[0] == 0 and offsets[1] == -1
@@ -332,7 +331,7 @@ class MicrotubulesUtil:
     @staticmethod
     def tubulin_is_crosslinked(topology, tubulin):
         """
-        is the tubulin connected to a neighbor on each ring side?
+        is the tubulin connected to a neighbor on each ring side?.
         """
         return (
             (MicrotubulesUtil.get_neighboring_tubulin(topology, tubulin, [0, -1])
@@ -351,7 +350,7 @@ class MicrotubulesUtil:
         neighbor_crosslinked=False,
     ):
         """
-        check if the tubulin's sites should be removed, if so remove them
+        check if the tubulin's sites should be removed, if so remove them.
         """
         if not MicrotubulesUtil.tubulin_has_sites(topology, tubulin):
             return False
@@ -390,7 +389,7 @@ class MicrotubulesUtil:
     @staticmethod
     def tubulin_is_not_crosslinked(topology, tubulin):
         """
-        is the tubulin missing at least one ring side connection?
+        is the tubulin missing at least one ring side connection?.
         """
         return (
             MicrotubulesUtil.get_neighboring_tubulin(topology, tubulin, [0, -1]) is None
@@ -403,9 +402,8 @@ class MicrotubulesUtil:
         topology, recipe, tubulin, site1_type="site#new", site2_type="site#new"
     ):
         """
-        add a new particle attached to the tubulin for each site
+        add a new particle attached to the tubulin for each site.
         """
-
         pos_tub = ReaddyUtil.get_vertex_position(topology, tubulin)
         for i in range(5):
             recipe.append_particle(
@@ -419,7 +417,7 @@ class MicrotubulesUtil:
         topology, recipe, tubulin, site1_type="site#new", site2_type="site#new"
     ):
         """
-        check if the tubulin should have sites added, if so add them
+        check if the tubulin should have sites added, if so add them.
         """
         if MicrotubulesUtil.tubulin_has_sites(topology, tubulin):
             if not (site1_type == "site#new" and site2_type == "site#new"):
@@ -437,7 +435,7 @@ class MicrotubulesUtil:
     @staticmethod
     def get_new_sites(topology, tubulin):
         """
-        get new site particles attached to a tubulin
+        get new site particles attached to a tubulin.
         """
         v_new_sites = ReaddyUtil.get_neighbors_of_type(
             topology, tubulin, "site#", False
@@ -464,7 +462,7 @@ class MicrotubulesUtil:
         site_state_filament,
     ):
         """
-        set positions, types, and intra-tubulin edges for new site particles
+        set positions, types, and intra-tubulin edges for new site particles.
         """
         recipe.change_particle_type(v_new_sites[0], "site#out")
         recipe.change_particle_position(v_new_sites[0], position + normal)
@@ -488,7 +486,7 @@ class MicrotubulesUtil:
     @staticmethod
     def connect_sites_between_tubulins(topology, recipe, v_sites_minus, v_sites_plus):
         """
-        add inter-tubulin edges between sites
+        add inter-tubulin edges between sites.
         """
         MicrotubulesUtil.add_edge(topology, recipe, v_sites_plus[0], v_sites_minus[0], "+ site0 -- - site0")
         MicrotubulesUtil.add_edge(topology, recipe, v_sites_plus[1], v_sites_minus[1], "+ site1 -- - site1")
@@ -500,7 +498,7 @@ class MicrotubulesUtil:
         """
         gets a list of all polymer numbers
         ("type1_1", "type1_2", "type1_3", "type2_1", ... "type3_3")
-            for type particle_type
+            for type particle_type.
 
             returns list of types
         """
@@ -516,7 +514,7 @@ class MicrotubulesUtil:
         adds topology species for all polymer numbers
         ("type1_1", "type1_2", "type1_3", "type2_1", ... "type3_3")
             for type particle_type
-            with diffusion coefficient diffCoeff [nm^2/s]
+            with diffusion coefficient diffCoeff [nm^2/s].
         """
         types = MicrotubulesUtil.get_all_polymer_tubulin_types(particle_type)
         for t in types:
@@ -539,7 +537,7 @@ class MicrotubulesUtil:
             and n_frayed_rings_plus rings at + end with outward bend
             and n_frayed_rings_minus rings at - end with outward bend
             and frayed_angle [radians] rotation of normal per bent tubulin
-            and radius [nm]
+            and radius [nm].
         """
         frayed_y_pos = 0.0
         for ring in range(n_frayed_rings_minus):
@@ -641,7 +639,7 @@ class MicrotubulesUtil:
             with n_filaments protofilaments
             and n_rings rings
             and n_frayed_rings_plus rings at + end with outward bend
-            and n_frayed_rings_minus rings at - end with outward bend
+            and n_frayed_rings_minus rings at - end with outward bend.
         """
         sites_per_scaffold = 5
         n_frayed_rings = n_frayed_rings_minus + n_frayed_rings_plus
@@ -735,7 +733,7 @@ class MicrotubulesUtil:
             and n_rings rings
             and n_frayed_rings_minus rings at - end with outward bend
             and n_frayed_rings_plus rings at + end with outward bend
-            and position_offset
+            and position_offset.
         """
         if n_rings - (n_frayed_rings_minus + n_frayed_rings_plus) < 2:
             raise Exception(
@@ -765,7 +763,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_tubulin_dimers(simulation, n_tubulin, box_size):
         """
-        add seed tubulin dimers to the simulation
+        add seed tubulin dimers to the simulation.
         """
         positions = np.random.uniform(size=(n_tubulin, 3)) * box_size - box_size * 0.5
         for p in range(len(positions)):
@@ -782,7 +780,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_tubulin_types(system, diffCoeff):
         """
-        add tubulin topology and particle types to the system
+        add tubulin topology and particle types to the system.
 
         microtubules are 2D polymers and to encode polarity in each dimension,
         there are 3 x 3 = 9 polymer types. These are represented as "type#x_y"
@@ -860,7 +858,7 @@ class MicrotubulesUtil:
     @staticmethod
     def get_all_tubulin_types():
         """
-        returns the list of all tubulin types
+        returns the list of all tubulin types.
         """
         tube_tubulin_types = [
             "tubulinA#GTP_",
@@ -881,7 +879,7 @@ class MicrotubulesUtil:
     def do_grow1(topology, GTP_state):
         """
         start adding a tubulin dimer to the end of a protofilament:
-        add additional particles
+        add additional particles.
         """
         if parameters["verbose"]:
             print("Grow 1")
@@ -909,7 +907,7 @@ class MicrotubulesUtil:
     def reaction_function_grow1_GTP(topology):
         """
         start adding a tubulin dimer to the end of a protofilament:
-        add additional particles
+        add additional particles.
         """
         return MicrotubulesUtil.do_grow1(topology, "GTP")
 
@@ -917,7 +915,7 @@ class MicrotubulesUtil:
     def reaction_function_grow1_GDP(topology):
         """
         start adding a tubulin dimer to the end of a protofilament:
-        add additional particles
+        add additional particles.
         """
         return MicrotubulesUtil.do_grow1(topology, "GDP")
 
@@ -925,7 +923,7 @@ class MicrotubulesUtil:
     def do_grow2(topology):
         """
         finish adding a tubulin dimer to the end of a protofilament:
-        set types, positions, and edges
+        set types, positions, and edges.
         """
         recipe = readdy.StructuralReactionRecipe(topology)
         if parameters["verbose"]:
@@ -1047,7 +1045,7 @@ class MicrotubulesUtil:
     def reaction_function_grow2_GTP(topology):
         """
         finish adding a tubulin dimer to the end of a protofilament:
-        set types, positions, and edges
+        set types, positions, and edges.
         """
         return MicrotubulesUtil.do_grow2(topology)
 
@@ -1055,7 +1053,7 @@ class MicrotubulesUtil:
     def reaction_function_grow2_GDP(topology):
         """
         finish adding a tubulin dimer to the end of a protofilament:
-        set types, positions, and edges
+        set types, positions, and edges.
         """
         return MicrotubulesUtil.do_grow2(topology)
 
@@ -1063,7 +1061,7 @@ class MicrotubulesUtil:
     def do_shrink1(topology, GTP_state):
         """
         start removing a tubulin dimer from the end of a protofilament:
-        remove or detach particles, change particle types
+        remove or detach particles, change particle types.
         """
         if parameters["verbose"]:
             print("Shrink")
@@ -1151,7 +1149,7 @@ class MicrotubulesUtil:
     def reaction_function_shrink_GTP(topology):
         """
         start removing a tubulin dimer from the end of a protofilament:
-        remove or detach particles, change particle types
+        remove or detach particles, change particle types.
         """
         return MicrotubulesUtil.do_shrink1(topology, "GTP")
 
@@ -1159,7 +1157,7 @@ class MicrotubulesUtil:
     def reaction_function_shrink_GDP(topology):
         """
         start removing a tubulin dimer from the end of a protofilament:
-        remove or detach particles, change particle types
+        remove or detach particles, change particle types.
         """
         return MicrotubulesUtil.do_shrink1(topology, "GDP")
 
@@ -1167,7 +1165,7 @@ class MicrotubulesUtil:
     def reaction_function_shrink2(topology):
         """
         finish removing a tubulin dimer from the end of a protofilament:
-        change topology types
+        change topology types.
         """
         recipe = readdy.StructuralReactionRecipe(topology)
         if len(topology.graph.get_vertices()) == 2:
@@ -1181,7 +1179,7 @@ class MicrotubulesUtil:
     @staticmethod
     def reaction_function_attach(topology):
         """
-        attach tubulins laterally
+        attach tubulins laterally.
         """
         if parameters["verbose"]:
             print("Attach")
@@ -1281,7 +1279,7 @@ class MicrotubulesUtil:
     @staticmethod
     def reaction_function_detach1(topology):
         """
-        add new sites in preparation to detach tubulins laterally
+        add new sites in preparation to detach tubulins laterally.
         """
         if parameters["verbose"]:
             print("Detach")
@@ -1340,7 +1338,7 @@ class MicrotubulesUtil:
     @staticmethod
     def reaction_function_detach2(topology):
         """
-        detach tubulins laterally
+        detach tubulins laterally.
         """
         recipe = readdy.StructuralReactionRecipe(topology)
         detaching_sites = [
@@ -1488,7 +1486,7 @@ class MicrotubulesUtil:
     @staticmethod
     def reaction_function_hydrolyze(topology):
         """
-        hydrolyze GTP to GDP in a random tubulin
+        hydrolyze GTP to GDP in a random tubulin.
         """
         if parameters["verbose"]:
             print("Hydrolyze")
@@ -1513,14 +1511,14 @@ class MicrotubulesUtil:
     @staticmethod
     def rate_function_shrink_GTP(topology):
         """
-        rate function for removing a GTP-tubulin dimer from the end of a protofilament
+        rate function for removing a GTP-tubulin dimer from the end of a protofilament.
         """
         return parameters["protofilament_shrink_GTP_rate"]
 
     @staticmethod
     def rate_function_shrink_GDP(topology):
         """
-        rate function for removing a GDP-tubulin dimer from the end of a protofilament
+        rate function for removing a GDP-tubulin dimer from the end of a protofilament.
         """
         return parameters["protofilament_shrink_GDP_rate"]
 
@@ -1528,21 +1526,21 @@ class MicrotubulesUtil:
     def rate_function_detach_ring(topology):
         """
         rate function for detaching protofilaments laterally
-        at ring sites for GTP-tubulin
+        at ring sites for GTP-tubulin.
         """
         return parameters["ring_detach_GTP_rate"] + parameters["ring_detach_GDP_rate"]
 
     @staticmethod
     def rate_function_hydrolyze(topology):
         """
-        rate function for hydrolyzing GTP to GDP in tubulin Bs
+        rate function for hydrolyzing GTP to GDP in tubulin Bs.
         """
         return parameters["hydrolyze_rate"]
 
     @staticmethod
     def add_bonds_between_tubulins(tubulin_types, force_constant, system, util):
         """
-        add bonds between tubulins
+        add bonds between tubulins.
         """
         util.add_polymer_bond_2D(  # bonds between protofilaments
             tubulin_types, [0, 0], tubulin_types, [0, -1], force_constant, 5.2, system
@@ -1557,7 +1555,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_tubulin_site_bonds(tubulin_types, site_types, force_constant, system, util):
         """
-        add bonds between a tubulin and its sites
+        add bonds between a tubulin and its sites.
         """
         util.add_polymer_bond_2D(
             tubulin_types, [0, 0], site_types, [], force_constant, 1.5, system
@@ -1621,7 +1619,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_bent_site_bonds(force_constant, system, util):
         """
-        add bonds between sites on bent tubulins
+        add bonds between sites on bent tubulins.
         """
         util.add_bond(["site#out"], ["site#out"], force_constant, 3.73, system)
         util.add_bond(
@@ -1649,7 +1647,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_angles_between_tubulins(tubulin_type_sets, force_constant, system, util):
         """
-        add angles between tubulins
+        add angles between tubulins.
         """
         util.add_polymer_angle_2D(
             tubulin_type_sets[2],
@@ -1754,7 +1752,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_tubulin_site_angles(tubulin_types, force_constant, system, util):
         """
-        add angles between a tubulin and its sites
+        add angles between a tubulin and its sites.
         """
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -1986,7 +1984,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_bent_site_angles(tubulin_types, force_constant, system, util):
         """
-        add angles between sites on bent tubulins
+        add angles between sites on bent tubulins.
         """
         util.add_angle(
             ["site#1", "site#1_GTP", "site#1_GDP"],
@@ -2128,7 +2126,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_edge_site_angles(tubulin_types, force_constant, system, util):
         """
-        add angles between sites at the edge between tube and bent tubulins
+        add angles between sites at the edge between tube and bent tubulins.
         """
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2302,7 +2300,7 @@ class MicrotubulesUtil:
         adds a pairwise repulsion between all polymer numbers
             of types particle_types
             with force constant force_const
-            with equilibrium distance [nm]
+            with equilibrium distance [nm].
         """
         types = []
         for t in particle_types:
@@ -2313,7 +2311,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_growth_reaction(system, rate_GTP, rate_GDP, reaction_distance):
         """
-        add dimers to the ends of protofilaments
+        add dimers to the ends of protofilaments.
         """
         system.topologies.add_spatial_reaction(
             "Start_Grow_GTP: Microtubule(site#4_GTP) + Dimer(tubulinA#free) -> "
@@ -2356,7 +2354,7 @@ class MicrotubulesUtil:
     def add_shrink_reaction(system):
         """
         separate dimers and oligomers from the ends
-        of frayed protofilaments and oligomers
+        of frayed protofilaments and oligomers.
         """
         system.topologies.add_structural_reaction(
             "Shrink_MT_GTP",
@@ -2416,7 +2414,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_attach_reaction(system, rate_GTP, rate_GDP, reaction_distance):
         """
-        attach protofilaments laterally
+        attach protofilaments laterally.
         """
         system.topologies.add_spatial_reaction(
             "Start_Attach_GTP1: Microtubule(site#1_GTP) + Microtubule(site#2_GTP) -> "
@@ -2462,7 +2460,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_detach_reaction(system):
         """
-        detach protofilaments laterally
+        detach protofilaments laterally.
         """
         system.topologies.add_structural_reaction(
             "Start_Detach",
@@ -2486,7 +2484,7 @@ class MicrotubulesUtil:
     @staticmethod
     def add_hydrolyze_reaction(system):
         """
-        hydrolyze GTP-tubulinB to GDP-tubulinB
+        hydrolyze GTP-tubulinB to GDP-tubulinB.
         """
         system.topologies.add_structural_reaction(
             "Hydrolyze",

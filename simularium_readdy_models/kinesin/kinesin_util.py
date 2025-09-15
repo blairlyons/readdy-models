@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
+import random
 
 import numpy as np
 import readdy
-import random
 
 from ..common import ReaddyUtil
 from ..microtubules.microtubules_util import MicrotubulesUtil
-
 
 parameters = {}
 
@@ -21,7 +20,7 @@ def set_parameters(p):
 class KinesinUtil:
     def __init__(self, parameters):
         """
-        Utility functions for ReaDDy kinesin models
+        Utility functions for ReaDDy kinesin models.
 
         Parameters need to be accessible in ReaDDy callbacks
         which can't be instance methods, so parameters are global
@@ -31,7 +30,7 @@ class KinesinUtil:
     @staticmethod
     def add_kinesin(position_offset, simulation):
         """
-        add a kinesin to the simulation
+        add a kinesin to the simulation.
         """
         positions = np.array(
             [
@@ -55,7 +54,7 @@ class KinesinUtil:
     def set_kinesin_state(topology, recipe, from_motor_state, to_motor_state):
         """
         change the state of a motor and update the kinesin state to match
-            for a dictionary of types and radii [nm]
+            for a dictionary of types and radii [nm].
 
             returns dictionary mapping all types to radii
         """
@@ -99,7 +98,7 @@ class KinesinUtil:
     @staticmethod
     def reaction_function_motor_bind_tubulin(topology):
         """
-        bind a kinesin motor in ADP state to a free tubulinB
+        bind a kinesin motor in ADP state to a free tubulinB.
         """
         if parameters["verbose"]:
             print("Bind tubulin")
@@ -130,7 +129,7 @@ class KinesinUtil:
     @staticmethod
     def reaction_function_motor_bind_ATP(topology):
         """
-        set bound apo motor's state to ATP (and implicitly simulate ATP binding)
+        set bound apo motor's state to ATP (and implicitly simulate ATP binding).
         """
         if parameters["verbose"]:
             print("Bind ATP")
@@ -148,7 +147,7 @@ class KinesinUtil:
     @staticmethod
     def reaction_function_motor_release_tubulin(topology):
         """
-        release a bound motor from tubulin
+        release a bound motor from tubulin.
         """
         if parameters["verbose"]:
             print("Release tubulin")
@@ -184,7 +183,7 @@ class KinesinUtil:
     @staticmethod
     def reaction_function_cleanup_release_tubulin(topology):
         """
-        cleanup after releasing a bound motor from tubulin
+        cleanup after releasing a bound motor from tubulin.
         """
         recipe = readdy.StructuralReactionRecipe(topology)
         motors = ReaddyUtil.get_vertices_of_type(topology, "motor", False)
@@ -199,21 +198,21 @@ class KinesinUtil:
     @staticmethod
     def rate_function_motor_bind_ATP(topology):
         """
-        rate function for a motor binding ATP
+        rate function for a motor binding ATP.
         """
         return parameters["motor_bind_ATP_rate"]
 
     @staticmethod
     def rate_function_motor_release_tubulin(topology):
         """
-        rate function for a bound motor releasing from tubulin
+        rate function for a bound motor releasing from tubulin.
         """
         return parameters["motor_release_tubulin_rate"]
 
     @staticmethod
     def add_kinesin_bonds_and_repulsions(motor_types, force_constant, system, util):
         """
-        add bonds between tubulins
+        add bonds between tubulins.
         """
         necklinker_force_constant = 0.002 * force_constant
         util.add_bond(["hips"], motor_types, necklinker_force_constant, 2.0, system)
@@ -225,7 +224,7 @@ class KinesinUtil:
     @staticmethod
     def add_tubulin_bonds_and_repulsions(tubulin_types, force_constant, system, util):
         """
-        add bonds between tubulins
+        add bonds between tubulins.
         """
         util.add_polymer_bond_2D(  # bonds between protofilaments
             tubulin_types, [0, 0], tubulin_types, [0, -1], force_constant, 5.2, system
@@ -245,7 +244,7 @@ class KinesinUtil:
     @staticmethod
     def add_kinesin_angles_and_dihedrals(tubulin_types, force_constant, system, util):
         """
-        add kinesin angles
+        add kinesin angles.
         """
         # angles from tubulins to bound motor
         util.add_polymer_angle_2D(
@@ -332,7 +331,7 @@ class KinesinUtil:
     @staticmethod
     def add_angles_between_tubulins(tubulin_types, force_constant, system, util):
         """
-        add angles between tubulins
+        add angles between tubulins.
         """
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -406,7 +405,7 @@ class KinesinUtil:
         motor_types, bound_tubulin_types, tubulin_types, force_constant, system, util
     ):
         """
-        add repulsions between motors and tubulins
+        add repulsions between motors and tubulins.
         """
         bound_types = []
         for t in bound_tubulin_types:
@@ -420,7 +419,7 @@ class KinesinUtil:
     @staticmethod
     def add_motor_bind_tubulin_reaction(system, rate, reaction_distance):
         """
-        bind a kinesin motor in ADP state to a free tubulinB
+        bind a kinesin motor in ADP state to a free tubulinB.
         """
         # spatial reactions
         polymer_numbers = MicrotubulesUtil.get_all_polymer_tubulin_types("")
@@ -458,7 +457,7 @@ class KinesinUtil:
     @staticmethod
     def add_motor_bind_ATP_reaction(system):
         """
-        set bound apo motor's state to ATP (and implicitly simulate ATP binding)
+        set bound apo motor's state to ATP (and implicitly simulate ATP binding).
         """
         kinesin_states = ["ADP-apo", "ATP-apo", "apo-apo"]
         for state in kinesin_states:
@@ -472,7 +471,7 @@ class KinesinUtil:
     @staticmethod
     def add_motor_release_tubulin_reaction(system):
         """
-        release a bound motor from tubulin
+        release a bound motor from tubulin.
         """
         kinesin_states = ["ADP-ATP", "ATP-ATP", "ATP-apo"]
         for state in kinesin_states:

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import numpy as np
 
-from simularium_readdy_models.actin import FiberData, ArpData
+from .arp_data import ArpData
+from .fiber_data import FiberData
 
 
 class ActinTestData:

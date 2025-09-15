@@ -1,36 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-import pytest
 import numpy as np
+import pytest
 
 from simularium_readdy_models.actin import (
     ActinGenerator,
-    # ActinTestData,
     FiberData,
 )
-from simularium_readdy_models.tests.conftest import (
-    # assert_monomers_equal,
-    assert_fibers_equal,
-)
-
-
-# @pytest.mark.parametrize(
-#     "fibers, expected_monomers",
-#     [
-#         (
-#             ActinTestData.linear_actin_fiber(),
-#             ActinTestData.linear_actin_monomers(),
-#         ),
-#         (
-#             ActinTestData.complex_branched_actin_fiber(),
-#             ActinTestData.complex_branched_actin_monomers(),
-#         ),
-#     ],
-# )
-# def test_generate_monomers(fibers, expected_monomers):
-#     monomers = ActinGenerator.get_monomers(fibers, use_uuids=False)
-#     assert_monomers_equal(monomers, expected_monomers)
+from simularium_readdy_models.tests.conftest import assert_fibers_equal
 
 
 @pytest.mark.parametrize(

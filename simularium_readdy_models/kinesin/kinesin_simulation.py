@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import numpy as np
 import readdy
@@ -12,7 +11,7 @@ from .kinesin_util import KinesinUtil
 class KinesinSimulation:
     def __init__(self, parameters, record=False, save_checkpoints=False):
         """
-        Creates a ReaDDy kinesin simulation
+        Creates a ReaDDy kinesin simulation.
 
         Params = Dict[str, float]
         keys:
@@ -40,7 +39,7 @@ class KinesinSimulation:
     def create_kinesin_system(self):
         """
         Create the ReaDDy system for kinesin
-        including particle types, constraints, and reactions
+        including particle types, constraints, and reactions.
         """
         self.system = readdy.ReactionDiffusionSystem([self.parameters["box_size"]] * 3)
         self.parameters["temperature_K"] = self.parameters["temperature_C"] + 273.15
@@ -54,7 +53,7 @@ class KinesinSimulation:
     def add_kinesin_types(self):
         """
         Add particle and topology types for kinesin particles
-        to the ReaDDy system
+        to the ReaDDy system.
         """
         temperature_K = self.parameters["temperature_K"]
         viscosity = self.parameters["viscosity"]
@@ -91,7 +90,7 @@ class KinesinSimulation:
     def add_kinesin_constraints(self):
         """
         Add geometric constraints for connected kinesin particles,
-        including bonds, angles, and repulsions, to the ReaDDy system
+        including bonds, angles, and repulsions, to the ReaDDy system.
         """
         force_constant = self.parameters["force_constant"]
         microtubule_force_constant = self.parameters["microtubules_force_constant"]
@@ -119,7 +118,7 @@ class KinesinSimulation:
 
     def add_kinesin_reactions(self):
         """
-        Add reactions to the ReaDDy system
+        Add reactions to the ReaDDy system.
         """
         self.kinesin_util.add_motor_bind_tubulin_reaction(
             self.system,
@@ -131,7 +130,7 @@ class KinesinSimulation:
 
     def add_microtubule(self):
         """
-        Add a microtubule
+        Add a microtubule.
         """
         MicrotubulesUtil.add_microtubule(
             int(self.parameters["microtubule_n_rings"]),
@@ -144,7 +143,7 @@ class KinesinSimulation:
 
     def add_kinesin(self):
         """
-        Add a kinesin
+        Add a kinesin.
         """
         self.kinesin_util.add_kinesin(
             np.array(

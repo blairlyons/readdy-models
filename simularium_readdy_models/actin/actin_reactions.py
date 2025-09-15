@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 
 class ACTIN_REACTIONS:
@@ -64,7 +63,7 @@ class ACTIN_REACTIONS:
             "Cap_Unbind",
         ],
     }
-    
+
     GROWTH_RXNS = [
         "Dimerize",
         "Trimerize",
@@ -74,14 +73,19 @@ class ACTIN_REACTIONS:
         "Start Branch",
         "Bind Cap",
     ]
-    
+
     GROUPED_GROWTH_RXNS = {
         "Dimerize Actin": ["Dimerize"],
-        "Polymerize Actin": ["Trimerize", "Grow Pointed", "Grow Barbed", "Start Branch"],
+        "Polymerize Actin": [
+            "Trimerize",
+            "Grow Pointed",
+            "Grow Barbed",
+            "Start Branch",
+        ],
         "Bind Arp2/3": ["Bind Arp2/3"],
         "Bind Cap": ["Bind Cap"],
     }
-    
+
     STRUCTURAL_RXNS = [
         "Reverse Dimerize",
         "Reverse Trimerize",
