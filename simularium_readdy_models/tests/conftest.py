@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from simularium_models_util import ReaddyUtil
+from simularium_readdy_models import ReaddyUtil
 
 
 def run_readdy(total_steps, system, simulation):
@@ -12,7 +12,9 @@ def run_readdy(total_steps, system, simulation):
     init = readdy_actions.initialize_kernel()
     diffuse = readdy_actions.integrator_euler_brownian_dynamics(timestep)
     calculate_forces = readdy_actions.calculate_forces()
-    create_nl = readdy_actions.create_neighbor_list(system.calculate_max_cutoff().magnitude)
+    create_nl = readdy_actions.create_neighbor_list(
+        system.calculate_max_cutoff().magnitude
+    )
     update_nl = readdy_actions.update_neighbor_list()
     react = readdy_actions.reaction_handler_uncontrolled_approximation(timestep)
     react_top = readdy_actions.topology_reaction_handler(timestep)
@@ -35,7 +37,7 @@ def run_readdy(total_steps, system, simulation):
 
 def get_min_id(monomers):
     """
-    pytest caches something that causes particle IDs 
+    pytest caches something that causes particle IDs
     to not always start at 0 in separate tests,
     so use min ID to offset test values to match expected.
     """
@@ -60,18 +62,32 @@ def monomer_state_to_str(monomers):
         type_name = particle["type_name"]
         position = particle["position"]
         neighbor_ids = [nid - min_id for nid in particle["neighbor_ids"]]
-        result += f"  {particle_id - min_id} : {type_name}, {position}, {neighbor_ids}\n"
+        result += (
+            f"  {particle_id - min_id} : {type_name}, {position}, {neighbor_ids}\n"
+        )
     return result
-    
-    
+
+
 def check_readdy_state(simulation, expected_monomers, ignore_extra_spatial_rxn=False):
-    test_monomers = ReaddyUtil.get_current_monomers(simulation.simulation.current_topologies)
+    test_monomers = ReaddyUtil.get_current_monomers(
+        simulation.simulation.current_topologies
+    )
     # if ignore_extra_spatial_rxn:
     # raise Exception(monomer_state_to_str(test_monomers))
-    assert_monomers_equal(test_monomers, expected_monomers, ignore_extra_spatial_rxn=ignore_extra_spatial_rxn, test_position=False)
+    assert_monomers_equal(
+        test_monomers,
+        expected_monomers,
+        ignore_extra_spatial_rxn=ignore_extra_spatial_rxn,
+        test_position=False,
+    )
 
 
-def assert_monomers_equal(test_monomers, expected_monomers, ignore_extra_spatial_rxn=False, test_position=False):
+def assert_monomers_equal(
+    test_monomers,
+    expected_monomers,
+    ignore_extra_spatial_rxn=False,
+    test_position=False,
+):
     """
     Assert two topologies (in monomer form) are equivalent.
     """
@@ -79,9 +95,14 @@ def assert_monomers_equal(test_monomers, expected_monomers, ignore_extra_spatial
     # and contains the correct particle_ids (in any order, starting at any index)
     test_top_id = list(test_monomers["topologies"].keys())[0]
     exp_top_id = list(expected_monomers["topologies"].keys())[0]
-    assert "SpatialRxnResult" not in test_monomers["topologies"][test_top_id]["type_name"]
+    assert (
+        "SpatialRxnResult" not in test_monomers["topologies"][test_top_id]["type_name"]
+    )
     if not ignore_extra_spatial_rxn:
-        assert test_monomers["topologies"][test_top_id]["type_name"] == expected_monomers["topologies"][exp_top_id]["type_name"]
+        assert (
+            test_monomers["topologies"][test_top_id]["type_name"]
+            == expected_monomers["topologies"][exp_top_id]["type_name"]
+        )
     test_particle_ids = test_monomers["topologies"][test_top_id]["particle_ids"]
     # pytest caches something that causes particle IDs to not always start at 0
     min_id = get_min_id(test_monomers)
@@ -94,7 +115,10 @@ def assert_monomers_equal(test_monomers, expected_monomers, ignore_extra_spatial
             expected_monomers["topologies"][exp_top_id]["particle_ids"]
         )
         for particle_id in test_particle_ids:
-            assert particle_id - min_id in expected_monomers["topologies"][exp_top_id]["particle_ids"], f"top particle IDs = {test_particle_ids}"
+            assert (
+                particle_id - min_id
+                in expected_monomers["topologies"][exp_top_id]["particle_ids"]
+            ), f"top particle IDs = {test_particle_ids}"
     for particle_id in expected_monomers["topologies"][exp_top_id]["particle_ids"]:
         assert particle_id + min_id in test_particle_ids
     # check the particle types, positions (optionally), and neighbors
@@ -109,7 +133,9 @@ def assert_monomers_equal(test_monomers, expected_monomers, ignore_extra_spatial
         exp_neighbor_ids.sort()
         exp_neighbor_ids = [nid + min_id for nid in exp_neighbor_ids]
         if not ignore_extra_spatial_rxn:
-            assert test_neighbor_ids == exp_neighbor_ids, f"Neighbors don't match for particle ID {particle_id - min_id}"
+            assert (
+                test_neighbor_ids == exp_neighbor_ids
+            ), f"Neighbors don't match for particle ID {particle_id - min_id} : {test_neighbor_ids} != {exp_neighbor_ids}"
         else:
             for exp_neighbor_id in exp_neighbor_ids:
                 assert exp_neighbor_id in test_particle["neighbor_ids"]

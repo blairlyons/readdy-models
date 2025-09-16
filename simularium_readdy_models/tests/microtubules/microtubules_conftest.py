@@ -5,10 +5,10 @@ import math
 
 import numpy as np
 
-from simularium_models_util.microtubules import (
+from simularium_readdy_models.microtubules import (
     MicrotubulesSimulation
 )
-from simularium_models_util import ReaddyUtil
+from simularium_readdy_models import ReaddyUtil
 from ..conftest import monomer_state_to_str
 
 
@@ -198,7 +198,7 @@ def create_microtubules_simulation(parameters, ring_connections, topology_type, 
 
 def check_for_attach_spatial_reaction(expected_n_GTP_site_tags, simulation):
     test_monomers = ReaddyUtil.get_current_monomers(simulation.simulation.current_topologies)
-    # raise Exception(monomer_state_to_str(test_monomers))
+    raise Exception(monomer_state_to_str(test_monomers))
     n_GTP_site_tags = 0
     for particle_id in test_monomers["particles"]:
         particle = test_monomers["particles"][particle_id]

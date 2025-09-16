@@ -50,7 +50,7 @@ class ReaddyUtil:
         box_size: np.ndarray,
         type_name: str = "",
         color: str = "",
-        exclude_types: List[str] = []
+        exclude_types: List[str] = [],
     ) -> TrajectoryData:
         """
         Add agent data for fibers to draw along the edges between particles
@@ -67,9 +67,7 @@ class ReaddyUtil:
                 n_edges += len(particle["neighbor_ids"])
             if n_edges > max_edges:
                 max_edges = n_edges
-        dimensions = ReaddyUtil._get_added_dimensions_for_lines(
-            traj_data, max_edges
-        )
+        dimensions = ReaddyUtil._get_added_dimensions_for_lines(traj_data, max_edges)
         new_agent_data = traj_data.agent_data.get_copy_with_increased_buffer_size(
             dimensions
         )
@@ -91,7 +89,8 @@ class ReaddyUtil:
                     if neighbor_id in monomer_data[time_index]["particles"]:
                         neighbor = monomer_data[time_index]["particles"][neighbor_id]
                         neighbor_pos = ReaddyUtil.get_non_periodic_boundary_position(
-                            particle["position"], neighbor["position"], box_size)
+                            particle["position"], neighbor["position"], box_size
+                        )
                         positions = np.array([particle["position"], neighbor_pos])
                         agent_index = start_i + n_edges
                         new_agent_data.unique_ids[time_index][agent_index] = (
@@ -683,7 +682,9 @@ class ReaddyUtil:
         return types
 
     @staticmethod
-    def get_types_with_polymer_numbers_2D(particle_types, x, y, polymer_offsets):
+    def get_types_with_polymer_numbers_2D(
+        particle_types, x, y, polymer_offsets, polymer_number_types
+    ):
         """
         creates a list of types with 2D polymer numbers
             for each type in particle types
@@ -697,9 +698,17 @@ class ReaddyUtil:
             types.append(
                 (
                     t
-                    + str(ReaddyUtil.calculate_polymer_number(x, polymer_offsets[0]))
+                    + str(
+                        ReaddyUtil.calculate_polymer_number(
+                            x, polymer_offsets[0], polymer_number_types
+                        )
+                    )
                     + "_"
-                    + str(ReaddyUtil.calculate_polymer_number(y, polymer_offsets[1]))
+                    + str(
+                        ReaddyUtil.calculate_polymer_number(
+                            y, polymer_offsets[1], polymer_number_types
+                        )
+                    )
                 )
                 if len(polymer_offsets) > 0
                 else t
@@ -931,6 +940,7 @@ class ReaddyUtil:
         force_const,
         bond_length,
         system,
+        polymer_number_types,
     ):
         """
         adds a bond between all polymer numbers
@@ -947,10 +957,10 @@ class ReaddyUtil:
                 offsets2 = ReaddyUtil.clamp_polymer_offsets_2D(x, polymer_offsets2)
                 self.add_bond(
                     ReaddyUtil.get_types_with_polymer_numbers_2D(
-                        particle_types1, x, y, offsets1
+                        particle_types1, x, y, offsets1, polymer_number_types
                     ),
                     ReaddyUtil.get_types_with_polymer_numbers_2D(
-                        particle_types2, x, y, offsets2
+                        particle_types2, x, y, offsets2, polymer_number_types
                     ),
                     force_const,
                     bond_length,
@@ -1004,6 +1014,7 @@ class ReaddyUtil:
         force_const,
         angle,
         system,
+        polymer_number_types,
     ):
         """
         adds an angle between all polymer numbers
@@ -1019,13 +1030,13 @@ class ReaddyUtil:
                 offsets3 = ReaddyUtil.clamp_polymer_offsets_2D(x, polymer_offsets3)
                 self.add_angle(
                     ReaddyUtil.get_types_with_polymer_numbers_2D(
-                        particle_types1, x, y, offsets1
+                        particle_types1, x, y, offsets1, polymer_number_types
                     ),
                     ReaddyUtil.get_types_with_polymer_numbers_2D(
-                        particle_types2, x, y, offsets2
+                        particle_types2, x, y, offsets2, polymer_number_types
                     ),
                     ReaddyUtil.get_types_with_polymer_numbers_2D(
-                        particle_types3, x, y, offsets3
+                        particle_types3, x, y, offsets3, polymer_number_types
                     ),
                     force_const,
                     angle,
@@ -1086,6 +1097,7 @@ class ReaddyUtil:
         force_const,
         angle,
         system,
+        polymer_number_types,
     ):
         """
         adds a cosine dihedral between all polymer numbers
@@ -1102,16 +1114,16 @@ class ReaddyUtil:
                 offsets4 = ReaddyUtil.clamp_polymer_offsets_2D(x, polymer_offsets4)
                 self.add_dihedral(
                     ReaddyUtil.get_types_with_polymer_numbers_2D(
-                        particle_types1, x, y, offsets1
+                        particle_types1, x, y, offsets1, polymer_number_types
                     ),
                     ReaddyUtil.get_types_with_polymer_numbers_2D(
-                        particle_types2, x, y, offsets2
+                        particle_types2, x, y, offsets2, polymer_number_types
                     ),
                     ReaddyUtil.get_types_with_polymer_numbers_2D(
-                        particle_types3, x, y, offsets3
+                        particle_types3, x, y, offsets3, polymer_number_types
                     ),
                     ReaddyUtil.get_types_with_polymer_numbers_2D(
-                        particle_types4, x, y, offsets4
+                        particle_types4, x, y, offsets4, polymer_number_types
                     ),
                     force_const,
                     angle,

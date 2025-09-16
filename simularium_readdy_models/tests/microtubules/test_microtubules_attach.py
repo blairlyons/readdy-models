@@ -5,8 +5,8 @@ import pytest
 import numpy as np
 
 
-from simularium_models_util.tests.conftest import run_readdy, check_readdy_state
-from simularium_models_util.tests.microtubules.microtubules_conftest import (
+from simularium_readdy_models.tests.conftest import run_readdy, check_readdy_state
+from simularium_readdy_models.tests.microtubules.microtubules_conftest import (
     create_microtubules_simulation,
     default_microtubule_parameters,
     check_for_attach_spatial_reaction,
@@ -195,7 +195,7 @@ from simularium_models_util.tests.microtubules.microtubules_conftest import (
         # # 5 rings x 4 filaments, at even border of frayed end, react to attach next to border
         (
             np.array([
-            # f       0     1     2     3           r
+            # f       0     1     2     3               r
                 [True, True, True, True, True], 
                 [True, True, True, True, True],        # 0
                 [True, True, True, True, True],        # 1

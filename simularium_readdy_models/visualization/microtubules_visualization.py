@@ -45,8 +45,8 @@ class MicrotubulesVisualization:
         )
         max_len = max([len(filament) for filament in protofilament_list])
         reshaped_protofilaments = [
-            filament + [0]*(max_len - len(filament))
-             for filament in protofilament_list
+            filament + [0] * (max_len - len(filament))
+            for filament in protofilament_list
         ]
         reshaped_protofilaments = np.transpose(np.array(reshaped_protofilaments))
         protofilaments = {}
@@ -67,14 +67,16 @@ class MicrotubulesVisualization:
         """
         Add a plot of average microtubule length.
         """
-        protofilament_list = MicrotubulesAnalyzer.analyze_protofilament_lengths(monomer_data)
+        protofilament_list = MicrotubulesAnalyzer.analyze_protofilament_lengths(
+            monomer_data
+        )
 
         mean_lengths = np.array(
-                [
-                    np.nanmean(protofilament) if len(protofilament) else 0
-                    for protofilament in protofilament_list
-                ]
-            )
+            [
+                np.nanmean(protofilament) if len(protofilament) else 0
+                for protofilament in protofilament_list
+            ]
+        )
         return ScatterPlotData(
             title="Average microtubule length",
             xaxis_title="Time (µs)",
@@ -293,9 +295,9 @@ class MicrotubulesVisualization:
         plots,
     ):
         if plots is not None:
-                    for plot_type in plots:
-                        for plot in plots[plot_type]:
-                            converter.add_plot(plot, plot_type)
+            for plot_type in plots:
+                for plot in plots[plot_type]:
+                    converter.add_plot(plot, plot_type)
         return converter
 
     @staticmethod

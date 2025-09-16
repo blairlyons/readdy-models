@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from simularium_models_util.actin import ActinStructure
+from simularium_readdy_models.actin import ActinStructure
 
 
 actin_parameters_rxns_off = {

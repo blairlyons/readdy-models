@@ -1,9 +1,9 @@
-from simularium_models_util.visualization import (
+from simularium_readdy_models.visualization import (
     MicrotubulesVisualization,
     microtubules_visualization,
 )
-from simularium_models_util.microtubules import MICROTUBULES_REACTIONS
-from simularium_models_util import ReaddyUtil
+from simularium_readdy_models.microtubules import MICROTUBULES_REACTIONS
+from simularium_readdy_models import ReaddyUtil
 from simulariumio import FileConverter, InputFileData
 import numpy as np
 

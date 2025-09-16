@@ -111,6 +111,13 @@ class MicrotubulesUtil:
         ]
 
     @staticmethod
+    def n_polymer_numbers():
+        """
+        how many different polymer numbers are there? 3 in each direction.
+        """
+        return 3
+
+    @staticmethod
     def polymer_indices_to_string(polymer_indices):
         """
         get the x and y polymer index for a particle.
@@ -125,8 +132,12 @@ class MicrotubulesUtil:
         polymer_offsets = ReaddyUtil.clamp_polymer_offsets_2D(
             polymer_indices[0], polymer_offsets
         )
-        x = ReaddyUtil.calculate_polymer_number(polymer_indices[0], polymer_offsets[0])
-        y = ReaddyUtil.calculate_polymer_number(polymer_indices[1], polymer_offsets[1])
+        x = ReaddyUtil.calculate_polymer_number(
+            polymer_indices[0], polymer_offsets[0], MicrotubulesUtil.n_polymer_numbers()
+        )
+        y = ReaddyUtil.calculate_polymer_number(
+            polymer_indices[1], polymer_offsets[1], MicrotubulesUtil.n_polymer_numbers()
+        )
         return [x, y]
 
     @staticmethod
@@ -334,10 +345,11 @@ class MicrotubulesUtil:
         is the tubulin connected to a neighbor on each ring side?.
         """
         return (
-            (MicrotubulesUtil.get_neighboring_tubulin(topology, tubulin, [0, -1])
-            is not None)
-            and (MicrotubulesUtil.get_neighboring_tubulin(topology, tubulin, [0, 1])
-            is not None)
+            MicrotubulesUtil.get_neighboring_tubulin(topology, tubulin, [0, -1])
+            is not None
+        ) and (
+            MicrotubulesUtil.get_neighboring_tubulin(topology, tubulin, [0, 1])
+            is not None
         )
 
     @staticmethod
@@ -441,7 +453,7 @@ class MicrotubulesUtil:
             topology, tubulin, "site#", False
         )
         return v_new_sites if len(v_new_sites) >= 1 else None
-    
+
     @staticmethod
     def add_edge(topology, recipe, v1, v2, info):
         particle_id1 = topology.particle_id_of_vertex(v1)
@@ -468,30 +480,54 @@ class MicrotubulesUtil:
         recipe.change_particle_position(v_new_sites[0], position + normal)
         recipe.change_particle_type(v_new_sites[1], f"site#1{site_state_ring}")
         recipe.change_particle_position(v_new_sites[1], position + side)
-        MicrotubulesUtil.add_edge(topology, recipe, v_new_sites[0], v_new_sites[1], "edge to site#out")
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_new_sites[0], v_new_sites[1], "edge to site#out"
+        )
         recipe.change_particle_type(v_new_sites[2], f"site#2{site_state_ring}")
         recipe.change_particle_position(v_new_sites[2], position - side)
-        MicrotubulesUtil.add_edge(topology, recipe, v_new_sites[0], v_new_sites[2], "edge to site#out")
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_new_sites[0], v_new_sites[2], "edge to site#out"
+        )
         recipe.change_particle_type(v_new_sites[3], "site#3")
         recipe.change_particle_position(v_new_sites[3], position - tangent)
-        MicrotubulesUtil.add_edge(topology, recipe, v_new_sites[0], v_new_sites[3], "edge to site#out")
-        MicrotubulesUtil.add_edge(topology, recipe, v_new_sites[1], v_new_sites[3], "edge to site#1")
-        MicrotubulesUtil.add_edge(topology, recipe, v_new_sites[2], v_new_sites[3], "edge to site#2")
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_new_sites[0], v_new_sites[3], "edge to site#out"
+        )
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_new_sites[1], v_new_sites[3], "edge to site#1"
+        )
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_new_sites[2], v_new_sites[3], "edge to site#2"
+        )
         recipe.change_particle_type(v_new_sites[4], f"site#4{site_state_filament}")
         recipe.change_particle_position(v_new_sites[4], position + tangent)
-        MicrotubulesUtil.add_edge(topology, recipe, v_new_sites[0], v_new_sites[4], "edge to site#out")
-        MicrotubulesUtil.add_edge(topology, recipe, v_new_sites[1], v_new_sites[4], "edge to site#1")
-        MicrotubulesUtil.add_edge(topology, recipe, v_new_sites[2], v_new_sites[4], "edge to site#2")
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_new_sites[0], v_new_sites[4], "edge to site#out"
+        )
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_new_sites[1], v_new_sites[4], "edge to site#1"
+        )
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_new_sites[2], v_new_sites[4], "edge to site#2"
+        )
 
     @staticmethod
     def connect_sites_between_tubulins(topology, recipe, v_sites_minus, v_sites_plus):
         """
         add inter-tubulin edges between sites.
         """
-        MicrotubulesUtil.add_edge(topology, recipe, v_sites_plus[0], v_sites_minus[0], "+ site0 -- - site0")
-        MicrotubulesUtil.add_edge(topology, recipe, v_sites_plus[1], v_sites_minus[1], "+ site1 -- - site1")
-        MicrotubulesUtil.add_edge(topology, recipe, v_sites_plus[2], v_sites_minus[2], "+ site2 -- - site2")
-        MicrotubulesUtil.add_edge(topology, recipe, v_sites_plus[3], v_sites_minus[4], "+ site3 -- - site4")
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_sites_plus[0], v_sites_minus[0], "+ site0 -- - site0"
+        )
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_sites_plus[1], v_sites_minus[1], "+ site1 -- - site1"
+        )
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_sites_plus[2], v_sites_minus[2], "+ site2 -- - site2"
+        )
+        MicrotubulesUtil.add_edge(
+            topology, recipe, v_sites_plus[3], v_sites_minus[4], "+ site3 -- - site4"
+        )
 
     @staticmethod
     def get_all_polymer_tubulin_types(particle_type):
@@ -1267,7 +1303,9 @@ class MicrotubulesUtil:
         )
         if not removed:
             raise Exception(message + "\n" + ReaddyUtil.topology_to_string(topology))
-        MicrotubulesUtil.add_edge(topology, recipe, tubulins[0], tubulins[1], "attach tubulins")
+        MicrotubulesUtil.add_edge(
+            topology, recipe, tubulins[0], tubulins[1], "attach tubulins"
+        )
         # for i in range(2):
         #     if prev_tubulin[i] is not None:
         #         MicrotubulesUtil.add_edge(topology, recipe, tubulins[i], prev_tubulin[i])
@@ -1543,10 +1581,24 @@ class MicrotubulesUtil:
         add bonds between tubulins.
         """
         util.add_polymer_bond_2D(  # bonds between protofilaments
-            tubulin_types, [0, 0], tubulin_types, [0, -1], force_constant, 5.2, system
+            tubulin_types,
+            [0, 0],
+            tubulin_types,
+            [0, -1],
+            force_constant,
+            5.2,
+            system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_bond_2D(  # bonds between rings
-            tubulin_types, [0, 0], tubulin_types, [-1, 0], force_constant, 4.0, system
+            tubulin_types,
+            [0, 0],
+            tubulin_types,
+            [-1, 0],
+            force_constant,
+            4.0,
+            system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_bond(  # dimer bond and temporary bond
             ["tubulinB#free"], ["tubulinA#free"], force_constant, 4.0, system
@@ -1558,7 +1610,14 @@ class MicrotubulesUtil:
         add bonds between a tubulin and its sites.
         """
         util.add_polymer_bond_2D(
-            tubulin_types, [0, 0], site_types, [], force_constant, 1.5, system
+            tubulin_types,
+            [0, 0],
+            site_types,
+            [],
+            force_constant,
+            1.5,
+            system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_bond(
             ["tubulinA#free", "tubulinB#free"], site_types, force_constant, 1.5, system
@@ -1659,6 +1718,7 @@ class MicrotubulesUtil:
             force_constant,
             1.75,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_type_sets[2],
@@ -1670,6 +1730,7 @@ class MicrotubulesUtil:
             force_constant,
             1.40,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_type_sets[2],
@@ -1681,6 +1742,7 @@ class MicrotubulesUtil:
             force_constant,
             1.40,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_type_sets[2],
@@ -1692,6 +1754,7 @@ class MicrotubulesUtil:
             force_constant,
             1.75,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_type_sets[0],
@@ -1703,6 +1766,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_type_sets[0],
@@ -1714,6 +1778,7 @@ class MicrotubulesUtil:
             force_constant,
             3.05,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_type_sets[0],
@@ -1725,6 +1790,7 @@ class MicrotubulesUtil:
             force_constant,
             3.05,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_type_sets[2],
@@ -1736,6 +1802,7 @@ class MicrotubulesUtil:
             force_constant,
             2.97,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_type_sets[2],
@@ -1747,6 +1814,7 @@ class MicrotubulesUtil:
             force_constant,
             2.67,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
 
     @staticmethod
@@ -1775,6 +1843,7 @@ class MicrotubulesUtil:
             force_constant,
             0.79,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -1797,6 +1866,7 @@ class MicrotubulesUtil:
             force_constant,
             0.79,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             ["site#out"],
@@ -1819,6 +1889,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi / 2,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_angle(
             ["site#out"],
@@ -1882,6 +1953,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi / 2,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -1900,6 +1972,7 @@ class MicrotubulesUtil:
             force_constant,
             0.79,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -1918,6 +1991,7 @@ class MicrotubulesUtil:
             force_constant,
             0.79,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_angle(
             ["site#1", "site#1_GTP", "site#1_GDP"],
@@ -1945,6 +2019,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             ["site#3"],
@@ -1956,6 +2031,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_angle(
             ["site#3"],
@@ -2028,6 +2104,7 @@ class MicrotubulesUtil:
             force_constant,
             1.66,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             ["site#1", "site#1_GTP", "site#1_GDP"],
@@ -2039,6 +2116,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi / 2,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             ["site#2", "site#2_GTP", "site#2_GDP"],
@@ -2050,6 +2128,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi / 2,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             ["site#4", "site#4_GTP", "site#4_GDP"],
@@ -2061,6 +2140,7 @@ class MicrotubulesUtil:
             force_constant,
             3.05,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             ["site#3"],
@@ -2072,6 +2152,7 @@ class MicrotubulesUtil:
             force_constant,
             3.05,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_angle(
             [
@@ -2138,6 +2219,7 @@ class MicrotubulesUtil:
             force_constant,
             1.81,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2149,6 +2231,7 @@ class MicrotubulesUtil:
             force_constant,
             0.3,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2160,6 +2243,7 @@ class MicrotubulesUtil:
             force_constant,
             2.84,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2171,6 +2255,7 @@ class MicrotubulesUtil:
             force_constant,
             1.4,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2182,6 +2267,7 @@ class MicrotubulesUtil:
             force_constant,
             1.75,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2193,6 +2279,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi / 2,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2204,6 +2291,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi / 2,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2215,6 +2303,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi / 2,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2226,6 +2315,7 @@ class MicrotubulesUtil:
             force_constant,
             0.0,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2237,6 +2327,7 @@ class MicrotubulesUtil:
             force_constant,
             np.pi,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2248,6 +2339,7 @@ class MicrotubulesUtil:
             force_constant,
             1.81,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2259,6 +2351,7 @@ class MicrotubulesUtil:
             force_constant,
             2.84,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2270,6 +2363,7 @@ class MicrotubulesUtil:
             force_constant,
             0.3,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2281,6 +2375,7 @@ class MicrotubulesUtil:
             force_constant,
             1.75,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -2292,6 +2387,7 @@ class MicrotubulesUtil:
             force_constant,
             1.4,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
 
     @staticmethod
@@ -2446,6 +2542,7 @@ class MicrotubulesUtil:
             reaction_function=MicrotubulesUtil.reaction_function_attach,
             rate_function=ReaddyUtil.rate_function_infinity,
         )
+
     #     system.topologies.add_structural_reaction(
     #         "Test",
     #         topology_type="SpatialRxnResult",

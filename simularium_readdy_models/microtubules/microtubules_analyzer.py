@@ -8,7 +8,7 @@ from .microtubules_util import MicrotubulesUtil
 
 class MicrotubulesAnalyzer:
     @staticmethod
-    def get_protofilaments(frame_particle_data, debug_flag = False):
+    def get_protofilaments(frame_particle_data, debug_flag=False):
         """
         get a list of the number of monomers in the closed part
         of each protofilament at the time index.
@@ -28,7 +28,9 @@ class MicrotubulesAnalyzer:
                 continue
             protofilament = [particle_id]
             if debug_flag:
-                import ipdb; ipdb.set_trace()
+                import ipdb
+
+                ipdb.set_trace()
             while plus_end_neighbor_id is not None:
                 protofilament.append(plus_end_neighbor_id)
                 (
@@ -82,9 +84,12 @@ class MicrotubulesAnalyzer:
             [neighbor_x, neighbor_y] = MicrotubulesUtil.get_polymer_indices(
                 neighbor_type
             )
-            if ("A" in particle["type_name"] and "A" in neighbor_type 
-                or 
-                "B" in particle["type_name"] and "B" in neighbor_type):
+            if (
+                "A" in particle["type_name"]
+                and "A" in neighbor_type
+                or "B" in particle["type_name"]
+                and "B" in neighbor_type
+            ):
                 continue
             if (
                 neighbor_x == plus_end_suffixes[0]
@@ -114,10 +119,14 @@ class MicrotubulesAnalyzer:
             # debug_flag = t>=3
             debug_flag = False
             if debug_flag:
-                import ipdb; ipdb.set_trace()
-            protofilaments = MicrotubulesAnalyzer.get_protofilaments(monomer_data[t], debug_flag)
+                import ipdb
+
+                ipdb.set_trace()
+            protofilaments = MicrotubulesAnalyzer.get_protofilaments(
+                monomer_data[t], debug_flag
+            )
             result.append([])
             for filament in protofilaments:
                 result[t].append(len(filament))
-   
+
         return result

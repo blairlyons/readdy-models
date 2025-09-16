@@ -3,8 +3,9 @@
 
 # import pytest
 from .actin_conftest import actin_parameters_rxns_off
-# from simularium_models_util.actin import ActinSimulation
-# from simularium_models_util.tests.conftest import (
+
+# from simularium_readdy_models.actin import ActinSimulation
+# from simularium_readdy_models.tests.conftest import (
 #     actin_parameters_rxns_off,
 #     assert_monomers_equal,
 #     actin_dimer,

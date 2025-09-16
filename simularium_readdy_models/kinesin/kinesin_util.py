@@ -227,10 +227,24 @@ class KinesinUtil:
         add bonds between tubulins.
         """
         util.add_polymer_bond_2D(  # bonds between protofilaments
-            tubulin_types, [0, 0], tubulin_types, [0, -1], force_constant, 5.2, system
+            tubulin_types,
+            [0, 0],
+            tubulin_types,
+            [0, -1],
+            force_constant,
+            5.2,
+            system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_bond_2D(  # bonds between rings
-            tubulin_types, [0, 0], tubulin_types, [-1, 0], force_constant, 4.0, system
+            tubulin_types,
+            [0, 0],
+            tubulin_types,
+            [-1, 0],
+            force_constant,
+            4.0,
+            system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         all_tubulin_types = []
         for t in range(len(tubulin_types)):
@@ -257,31 +271,36 @@ class KinesinUtil:
             1e32,
             0.0,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         # util.add_polymer_angle_2D(
         #     tubulin_types, [1, 0],
         #     ["tubulinB#bound_"], [0, 0],
         #     ["motor#apo", "motor#ATP", "motor#ADP"], [],
-        #     1e32, np.pi / 2., system
+        #     1e32, np.pi / 2., system,
+        #     MicrotubulesUtil.n_polymer_numbers()
         # )
         # util.add_polymer_angle_2D(
         #     tubulin_types, [0, -1],
         #     ["tubulinB#bound_"], [0, 0],
         #     ["motor#apo", "motor#ATP", "motor#ADP"], [],
-        #     1e32, 1.84, system
+        #     1e32, 1.84, system,
+        #     MicrotubulesUtil.n_polymer_numbers()
         # )
         # util.add_polymer_angle_2D(
         #     tubulin_types, [0, 1],
         #     ["tubulinB#bound_"], [0, 0],
         #     ["motor#apo", "motor#ATP", "motor#ADP"], [],
-        #     1e32, 1.54, system
+        #     1e32, 1.54, system,
+        #     MicrotubulesUtil.n_polymer_numbers()
         # )
         # # angle from bound tubulin to hips
         # util.add_polymer_angle_2D(
         #     ["tubulinB#bound_"], [0, 0],
         #     ["motor#ATP"], [],
         #     ["hips"], [],
-        #     0.5 * force_constant, np.pi * 5./9., system
+        #     0.5 * force_constant, np.pi * 5./9., system,
+        #     MicrotubulesUtil.n_polymer_numbers()
         # )
         # # angle from bound motor to free motor through hips
         # util.add_angle(
@@ -296,28 +315,32 @@ class KinesinUtil:
         #     ["tubulinB#bound_"], [0, 0],
         #     ["motor#ATP"], [],
         #     ["hips"], [],
-        #     1.5 * force_constant, np.pi * 17./18., system
+        #     1.5 * force_constant, np.pi * 17./18., system,
+        #     MicrotubulesUtil.n_polymer_numbers()
         # )
         # util.add_polymer_dihedral_2D(
         #     tubulin_types, [1, 0],
         #     ["tubulinB#bound_"], [0, 0],
         #     ["motor#ATP"], [],
         #     ["hips"], [],
-        #     1.5 * force_constant, np.pi / 18., system
+        #     1.5 * force_constant, np.pi / 18., system,
+        #     MicrotubulesUtil.n_polymer_numbers()
         # )
         # util.add_polymer_dihedral_2D(
         #     tubulin_types, [0, -1],
         #     ["tubulinB#bound_"], [0, 0],
         #     ["motor#ATP"], [],
         #     ["hips"], [],
-        #     1.5 * force_constant, 1.79, system
+        #     1.5 * force_constant, 1.79, system,
+        #     MicrotubulesUtil.n_polymer_numbers()
         # )
         # util.add_polymer_dihedral_2D(
         #     tubulin_types, [0, 1],
         #     ["tubulinB#bound_"], [0, 0],
         #     ["motor#ATP"], [],
         #     ["hips"], [],
-        #     1.5 * force_constant, 1.44, system
+        #     1.5 * force_constant, 1.44, system,
+        #     MicrotubulesUtil.n_polymer_numbers()
         # )
         # # dihedral from bound tubulin to free motor
         # util.add_polymer_dihedral_2D(
@@ -325,7 +348,8 @@ class KinesinUtil:
         #     ["motor#ATP"], [],
         #     ["hips"], [],
         #     ["motor#ADP"], [],
-        #     0.5 * force_constant, np.pi * 4./9., system
+        #     0.5 * force_constant, np.pi * 4./9., system,
+        #     MicrotubulesUtil.n_polymer_numbers()
         # )
 
     @staticmethod
@@ -343,6 +367,7 @@ class KinesinUtil:
             force_constant,
             1.75,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -354,6 +379,7 @@ class KinesinUtil:
             force_constant,
             1.40,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -365,6 +391,7 @@ class KinesinUtil:
             force_constant,
             1.40,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -376,6 +403,7 @@ class KinesinUtil:
             force_constant,
             1.75,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -387,6 +415,7 @@ class KinesinUtil:
             force_constant,
             np.pi,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
         util.add_polymer_angle_2D(
             tubulin_types,
@@ -398,6 +427,7 @@ class KinesinUtil:
             force_constant,
             2.67,
             system,
+            MicrotubulesUtil.n_polymer_numbers(),
         )
 
     @staticmethod

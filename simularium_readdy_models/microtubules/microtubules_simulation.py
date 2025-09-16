@@ -8,7 +8,9 @@ from .microtubules_util import MicrotubulesUtil
 
 
 class MicrotubulesSimulation:
-    def __init__(self, parameters, record=False, save_checkpoints=False, just_bonds=False):
+    def __init__(
+        self, parameters, record=False, save_checkpoints=False, just_bonds=False
+    ):
         """
         Creates a ReaDDy microtubules simulation.
 
